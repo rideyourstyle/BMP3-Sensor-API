@@ -40,6 +40,7 @@
  * @brief Sensor driver for BMP3 sensor */
 
 #include "bmp3.h"
+#include "log.h"
 
 /***************** Static function declarations ******************************/
 
@@ -54,7 +55,7 @@
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t get_calib_data(struct bmp3_dev *dev);
+static int8_t get_calib_data( struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API is used to parse the calibration data, compensates
@@ -64,7 +65,7 @@ static int8_t get_calib_data(struct bmp3_dev *dev);
  * @param[out] reg_data : Contains calibration data to be parsed.
  *
  */
-static void parse_calib_data(const uint8_t *reg_data, struct bmp3_dev *dev);
+static void parse_calib_data( const uint8_t *reg_data, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API gets the over sampling, ODR and filter settings
@@ -78,7 +79,7 @@ static void parse_calib_data(const uint8_t *reg_data, struct bmp3_dev *dev);
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t get_odr_filter_settings(struct bmp3_settings *settings, struct bmp3_dev *dev);
+static int8_t get_odr_filter_settings( struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API is used to parse the pressure and temperature data
@@ -88,7 +89,7 @@ static int8_t get_odr_filter_settings(struct bmp3_settings *settings, struct bmp
  * @param[out] uncomp_data : Contains the uncompensated press and temp data.
  *
  */
-static void parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *uncomp_data);
+static void parse_sensor_data( const uint8_t *reg_data, struct bmp3_uncomp_data *uncomp_data );
 
 /*!
  * @brief This internal API is used to compensate the pressure or temperature
@@ -106,10 +107,9 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t compensate_data(uint8_t sensor_comp,
-                              const struct bmp3_uncomp_data *uncomp_data,
-                              struct bmp3_data *comp_data,
-                              struct bmp3_calib_data *calib_data);
+static int8_t compensate_data(
+    uint8_t sensor_comp, const struct bmp3_uncomp_data *uncomp_data, struct bmp3_data *comp_data,
+    struct bmp3_calib_data *calib_data );
 
 #ifdef BMP3_FLOAT_COMPENSATION
 
@@ -175,9 +175,8 @@ static float pow_bmp3(double base, uint8_t power);
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t compensate_temperature(int64_t *temperature,
-                                     const struct bmp3_uncomp_data *uncomp_data,
-                                     struct bmp3_calib_data *calib_data);
+static int8_t compensate_temperature(
+    int64_t *temperature, const struct bmp3_uncomp_data *uncomp_data, struct bmp3_calib_data *calib_data );
 
 /*!
  * @brief This internal API is used to compensate the pressure data and return
@@ -192,9 +191,8 @@ static int8_t compensate_temperature(int64_t *temperature,
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t compensate_pressure(uint64_t *pressure,
-                                  const struct bmp3_uncomp_data *uncomp_data,
-                                  const struct bmp3_calib_data *calib_data);
+static int8_t compensate_pressure(
+    uint64_t *pressure, const struct bmp3_uncomp_data *uncomp_data, const struct bmp3_calib_data *calib_data );
 
 /*!
  * @brief This internal API is used to calculate the power functionality.
@@ -205,7 +203,7 @@ static int8_t compensate_pressure(uint64_t *pressure,
  * @return Output of power function.
  * @retval Calculated power function output in integer.
  */
-static uint32_t pow_bmp3(uint8_t base, uint8_t power);
+static uint32_t pow_bmp3( uint8_t base, uint8_t power );
 
 #endif /* BMP3_FLOAT_COMPENSATION */
 
@@ -222,7 +220,7 @@ static uint32_t pow_bmp3(uint8_t base, uint8_t power);
  * @retval True -> User wants to modify this group of settings
  * @retval False -> User does not want to modify this group of settings
  */
-static uint8_t are_settings_changed(uint32_t sub_settings, uint32_t settings);
+static uint8_t are_settings_changed( uint32_t sub_settings, uint32_t settings );
 
 /*!
  * @brief This internal API interleaves the register address between the
@@ -236,7 +234,7 @@ static uint8_t are_settings_changed(uint32_t sub_settings, uint32_t settings);
  * @param[in] len : No of bytes of data to be written for burst write.
  *
  */
-static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff, const uint8_t *reg_data, uint32_t len);
+static void interleave_reg_addr( const uint8_t *reg_addr, uint8_t *temp_buff, const uint8_t *reg_data, uint32_t len );
 
 /*!
  * @brief This internal API sets the pressure enable and
@@ -252,9 +250,8 @@ static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff, con
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t set_pwr_ctrl_settings(uint32_t desired_settings,
-                                    const struct bmp3_settings *settings,
-                                    struct bmp3_dev *dev);
+static int8_t set_pwr_ctrl_settings(
+    uint32_t desired_settings, const struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API sets the over sampling, ODR and filter settings of
@@ -270,7 +267,8 @@ static int8_t set_pwr_ctrl_settings(uint32_t desired_settings,
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev);
+static int8_t set_odr_filter_settings(
+    uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API sets the interrupt control (output mode, level,
@@ -287,9 +285,8 @@ static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_set
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t set_int_ctrl_settings(uint32_t desired_settings,
-                                    const struct bmp3_settings *settings,
-                                    struct bmp3_dev *dev);
+static int8_t set_int_ctrl_settings(
+    uint32_t desired_settings, const struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API sets the advance (i2c_wdt_en, i2c_wdt_sel)
@@ -305,8 +302,8 @@ static int8_t set_int_ctrl_settings(uint32_t desired_settings,
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_settings *settings,
-                                   struct bmp3_dev *dev);
+static int8_t set_advance_settings(
+    uint32_t desired_settings, const struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API fills the register address and register data of the
@@ -320,11 +317,8 @@ static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_
  * @param[in] settings          : Structure instance of bmp3_settings
  *
  */
-static void fill_osr_data(uint32_t desired_settings,
-                          uint8_t *addr,
-                          uint8_t *reg_data,
-                          uint8_t *len,
-                          const struct bmp3_settings *settings);
+static void fill_osr_data(
+    uint32_t desired_settings, uint8_t *addr, uint8_t *reg_data, uint8_t *len, const struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API fills the register address and register data of the
@@ -336,7 +330,7 @@ static void fill_osr_data(uint32_t desired_settings,
  * @param[in] settings    : Structure instance of bmp3_settings
  *
  */
-static void fill_odr_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len, struct bmp3_settings *settings);
+static void fill_odr_data( uint8_t *addr, uint8_t *reg_data, uint8_t *len, struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API fills the register address and register data of the
@@ -348,7 +342,7 @@ static void fill_odr_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len, struct
  * @param[in] settings    : Structure instance of bmp3_settings
  *
  */
-static void fill_filter_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len, const struct bmp3_settings *settings);
+static void fill_filter_data( uint8_t *addr, uint8_t *reg_data, uint8_t *len, const struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API is used to validate the device pointer for
@@ -361,7 +355,7 @@ static void fill_filter_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len, con
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t null_ptr_check(const struct bmp3_dev *dev);
+static int8_t null_ptr_check( const struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API parse the power control(power mode, pressure enable
@@ -371,7 +365,7 @@ static int8_t null_ptr_check(const struct bmp3_dev *dev);
  * @param[in] reg_data    : Register data to be parsed.
  * @param[in] settings    : Structure instance of bmp3_settings
  */
-static void parse_sett_data(const uint8_t *reg_data, struct bmp3_settings *settings);
+static void parse_sett_data( const uint8_t *reg_data, struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API parse the power control(power mode, pressure enable
@@ -381,7 +375,7 @@ static void parse_sett_data(const uint8_t *reg_data, struct bmp3_settings *setti
  * parse.
  * @param[out] settings : Structure instance of bmp3_settings.
  */
-static void parse_pwr_ctrl_settings(const uint8_t *reg_data, struct bmp3_settings *settings);
+static void parse_pwr_ctrl_settings( const uint8_t *reg_data, struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API parse the over sampling, ODR and filter
@@ -391,7 +385,7 @@ static void parse_pwr_ctrl_settings(const uint8_t *reg_data, struct bmp3_setting
  * parse.
  * @param[out] settings : Structure instance of bmp3_odr_filter_settings.
  */
-static void parse_odr_filter_settings(const uint8_t *reg_data, struct bmp3_odr_filter_settings *settings);
+static void parse_odr_filter_settings( const uint8_t *reg_data, struct bmp3_odr_filter_settings *settings );
 
 /*!
  * @brief This internal API parse the interrupt control(output mode, level,
@@ -401,7 +395,7 @@ static void parse_odr_filter_settings(const uint8_t *reg_data, struct bmp3_odr_f
  * parse.
  * @param[out] settings : Structure instance of bmp3_int_ctrl_settings.
  */
-static void parse_int_ctrl_settings(const uint8_t *reg_data, struct bmp3_int_ctrl_settings *settings);
+static void parse_int_ctrl_settings( const uint8_t *reg_data, struct bmp3_int_ctrl_settings *settings );
 
 /*!
  * @brief This internal API parse the advance (i2c_wdt_en, i2c_wdt_sel)
@@ -411,7 +405,7 @@ static void parse_int_ctrl_settings(const uint8_t *reg_data, struct bmp3_int_ctr
  * parse.
  * @param[out] settings : Structure instance of bmp3_adv_settings.
  */
-static void parse_advance_settings(const uint8_t *reg_data, struct bmp3_adv_settings *settings);
+static void parse_advance_settings( const uint8_t *reg_data, struct bmp3_adv_settings *settings );
 
 /*!
  * @brief This internal API validate the normal mode settings of the sensor.
@@ -424,7 +418,7 @@ static void parse_advance_settings(const uint8_t *reg_data, struct bmp3_adv_sett
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t validate_normal_mode_settings(struct bmp3_settings *settings, struct bmp3_dev *dev);
+static int8_t validate_normal_mode_settings( struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API validate the over sampling, ODR settings of the
@@ -436,7 +430,7 @@ static int8_t validate_normal_mode_settings(struct bmp3_settings *settings, stru
  * @retval 0 -> Success
  * @retval <0 -> Fail
  */
-static int8_t validate_osr_and_odr_settings(const struct bmp3_settings *settings);
+static int8_t validate_osr_and_odr_settings( const struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API calculates the pressure measurement duration of the
@@ -447,7 +441,7 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_settings *settings
  * @return Pressure measurement time
  * @retval Pressure measurement time in microseconds
  */
-static uint32_t calculate_press_meas_time(const struct bmp3_settings *settings);
+static uint32_t calculate_press_meas_time( const struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API calculates the temperature measurement duration of
@@ -458,7 +452,7 @@ static uint32_t calculate_press_meas_time(const struct bmp3_settings *settings);
  * @return Temperature measurement time
  * @retval Temperature measurement time in microseconds
  */
-static uint32_t calculate_temp_meas_time(const struct bmp3_settings *settings);
+static uint32_t calculate_temp_meas_time( const struct bmp3_settings *settings );
 
 /*!
  * @brief This internal API checks whether the measurement time and ODR duration
@@ -472,7 +466,7 @@ static uint32_t calculate_temp_meas_time(const struct bmp3_settings *settings);
  * @retval 0 -> Success
  * @retval >0 -> Warning
  */
-static int8_t verify_meas_time_and_odr_duration(uint32_t meas_t, uint32_t odr_duration);
+static int8_t verify_meas_time_and_odr_duration( uint32_t meas_t, uint32_t odr_duration );
 
 /*!
  * @brief This internal API puts the device to sleep mode.
@@ -484,7 +478,7 @@ static int8_t verify_meas_time_and_odr_duration(uint32_t meas_t, uint32_t odr_du
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t put_device_to_sleep(struct bmp3_dev *dev);
+static int8_t put_device_to_sleep( struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API sets the normal mode in the sensor.
@@ -497,7 +491,7 @@ static int8_t put_device_to_sleep(struct bmp3_dev *dev);
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t set_normal_mode(struct bmp3_settings *settings, struct bmp3_dev *dev);
+static int8_t set_normal_mode( struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API writes the power mode in the sensor.
@@ -510,7 +504,7 @@ static int8_t set_normal_mode(struct bmp3_settings *settings, struct bmp3_dev *d
  * @retval >0 -> Warning
  * @retval <0 -> Fail
  */
-static int8_t write_power_mode(const struct bmp3_settings *settings, struct bmp3_dev *dev);
+static int8_t write_power_mode( const struct bmp3_settings *settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API fills the fifo_config_1(fifo_mode,
@@ -522,9 +516,8 @@ static int8_t write_power_mode(const struct bmp3_settings *settings, struct bmp3
  * @param[in] fifo_settings    : Structure instance of bmp3_fifo_settings
  * @param[in] dev              : Structure instance of bmp3_dev
  */
-static int8_t fill_fifo_config_1(uint16_t desired_settings,
-                                 const struct bmp3_fifo_settings *fifo_settings,
-                                 struct bmp3_dev *dev);
+static int8_t fill_fifo_config_1(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API fills the fifo_config_2(fifo_sub_sampling,
@@ -536,9 +529,8 @@ static int8_t fill_fifo_config_1(uint16_t desired_settings,
  * @param[in] fifo_settings    : Structure instance of bmp3_fifo_settings
  * @param[in] dev              : Structure instance of bmp3_dev
  */
-static int8_t fill_fifo_config_2(uint16_t desired_settings,
-                                 const struct bmp3_fifo_settings *fifo_settings,
-                                 struct bmp3_dev *dev);
+static int8_t fill_fifo_config_2(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API fills the fifo interrupt control(fwtm_en, ffull_en)
@@ -549,9 +541,8 @@ static int8_t fill_fifo_config_2(uint16_t desired_settings,
  * @param[in] fifo_settings    : Structure instance of bmp3_fifo_settings
  * @param[in] dev              : Structure instance of bmp3_dev
  */
-static int8_t fill_fifo_int_ctrl(uint16_t desired_settings,
-                                 const struct bmp3_fifo_settings *fifo_settings,
-                                 struct bmp3_dev *dev);
+static int8_t fill_fifo_int_ctrl(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API is used to parse the fifo_config_1(fifo_mode,
@@ -564,7 +555,7 @@ static int8_t fill_fifo_int_ctrl(uint16_t desired_settings,
  * @param[out] fifo_settings : Structure instance of bmp3_fifo_settings which
  *                              contains the fifo settings after parsing.
  */
-static void parse_fifo_settings(const uint8_t *reg_data, struct bmp3_fifo_settings *fifo_settings);
+static void parse_fifo_settings( const uint8_t *reg_data, struct bmp3_fifo_settings *fifo_settings );
 
 /*!
  * @brief This internal API parse the FIFO data frame from the fifo buffer and
@@ -584,11 +575,9 @@ static void parse_fifo_settings(const uint8_t *reg_data, struct bmp3_fifo_settin
  * @retval 0 -> Success
  * @retval <0 -> Fail
  */
-static uint8_t parse_fifo_data_frame(uint8_t header,
-                                     struct bmp3_fifo_data *fifo,
-                                     uint16_t *byte_index,
-                                     struct bmp3_uncomp_data *uncomp_data,
-                                     uint8_t *parsed_frames);
+static uint8_t parse_fifo_data_frame(
+    uint8_t header, struct bmp3_fifo_data *fifo, uint16_t *byte_index, struct bmp3_uncomp_data *uncomp_data,
+    uint8_t *parsed_frames );
 
 /*!
  * @brief This internal API unpacks the FIFO data frame from the fifo buffer and
@@ -600,9 +589,8 @@ static uint8_t parse_fifo_data_frame(uint8_t header,
  * @param[out] uncomp_data : Uncompensated temperature and pressure data after
  * unpacking from fifo buffer.
  */
-static void unpack_temp_press_frame(uint16_t *byte_index,
-                                    const uint8_t *fifo_buffer,
-                                    struct bmp3_uncomp_data *uncomp_data);
+static void unpack_temp_press_frame(
+    uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data );
 
 /*!
  * @brief This internal API unpacks the FIFO data frame from the fifo buffer and
@@ -614,7 +602,8 @@ static void unpack_temp_press_frame(uint16_t *byte_index,
  * @param[out] uncomp_data : Uncompensated pressure data after unpacking from
  * fifo buffer.
  */
-static void unpack_press_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data);
+static void unpack_press_frame(
+    uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data );
 
 /*!
  * @brief This internal API unpacks the FIFO data frame from the fifo buffer and
@@ -626,7 +615,7 @@ static void unpack_press_frame(uint16_t *byte_index, const uint8_t *fifo_buffer,
  * @param[out] uncomp_data : Uncompensated temperature data after unpacking from
  * fifo buffer.
  */
-static void unpack_temp_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data);
+static void unpack_temp_frame( uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data );
 
 /*!
  * @brief This internal API unpacks the time frame from the fifo data buffer and
@@ -637,7 +626,7 @@ static void unpack_temp_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, 
  * are unpacked.
  * @param[out] sensor_time : Variable used to store the sensor time.
  */
-static void unpack_time_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, uint32_t *sensor_time);
+static void unpack_time_frame( uint16_t *byte_index, const uint8_t *fifo_buffer, uint32_t *sensor_time );
 
 /*!
  * @brief This internal API parses the FIFO buffer and gets the header info.
@@ -646,7 +635,7 @@ static void unpack_time_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, 
  * @param[in] fifo_buffer : FIFO buffer from where the header data is retrieved.
  * @param[out] byte_index : Byte count of fifo buffer.
  */
-static void get_header_info(uint8_t *header, const uint8_t *fifo_buffer, uint16_t *byte_index);
+static void get_header_info( uint8_t *header, const uint8_t *fifo_buffer, uint16_t *byte_index );
 
 /*!
  * @brief This internal API parses the FIFO data frame from the fifo buffer and
@@ -659,8 +648,8 @@ static void get_header_info(uint8_t *header, const uint8_t *fifo_buffer, uint16_
  * @param[out] uncomp_data : Uncompensated temperature or pressure or both the
  * data after unpacking from fifo buffer.
  */
-static void parse_fifo_sensor_data(uint8_t sensor_comp, const uint8_t *fifo_buffer,
-                                   struct bmp3_uncomp_data *uncomp_data);
+static void parse_fifo_sensor_data(
+    uint8_t sensor_comp, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data );
 
 /*!
  * @brief This internal API resets the FIFO buffer, start index,
@@ -670,7 +659,7 @@ static void parse_fifo_sensor_data(uint8_t sensor_comp, const uint8_t *fifo_buff
  * @param[out] fifo : FIFO structure instance where the fifo related variables
  * are reset.
  */
-static void reset_fifo_index(struct bmp3_fifo_data *fifo);
+static void reset_fifo_index( struct bmp3_fifo_data *fifo );
 
 /*!
  * @brief This API gets the command ready, data ready for pressure and
@@ -683,7 +672,7 @@ static void reset_fifo_index(struct bmp3_fifo_data *fifo);
  * @retval 0 -> Success
  * @retval <0 -> Fail
  */
-static int8_t get_sensor_status(struct bmp3_status *status, struct bmp3_dev *dev);
+static int8_t get_sensor_status( struct bmp3_status *status, struct bmp3_dev *dev );
 
 /*!
  * @brief This API gets the interrupt (fifo watermark, fifo full, data ready)
@@ -696,7 +685,7 @@ static int8_t get_sensor_status(struct bmp3_status *status, struct bmp3_dev *dev
  * @retval 0 -> Success
  * @retval <0 -> Fail
  */
-static int8_t get_int_status(struct bmp3_status *status, struct bmp3_dev *dev);
+static int8_t get_int_status( struct bmp3_status *status, struct bmp3_dev *dev );
 
 /*!
  * @brief This API gets the fatal, command and configuration error
@@ -709,7 +698,7 @@ static int8_t get_int_status(struct bmp3_status *status, struct bmp3_dev *dev);
  * @retval 0 -> Success
  * @retval <0 -> Fail
  */
-static int8_t get_err_status(struct bmp3_status *status, struct bmp3_dev *dev);
+static int8_t get_err_status( struct bmp3_status *status, struct bmp3_dev *dev );
 
 /*!
  * @brief This internal API converts the no. of frames required by the user to
@@ -724,9 +713,8 @@ static int8_t get_err_status(struct bmp3_status *status, struct bmp3_dev *dev);
  * @retval 0 -> Success
  * @retval <0 -> Fail
  */
-static int8_t convert_frames_to_bytes(uint16_t *watermark_len,
-                                      const struct bmp3_fifo_data *fifo,
-                                      const struct bmp3_fifo_settings *fifo_settings);
+static int8_t convert_frames_to_bytes(
+    uint16_t *watermark_len, const struct bmp3_fifo_data *fifo, const struct bmp3_fifo_settings *fifo_settings );
 
 /****************** Global Function Definitions *******************************/
 
@@ -735,19 +723,19 @@ static int8_t convert_frames_to_bytes(uint16_t *watermark_len,
  *  It performs the selection of I2C/SPI read mechanism according to the
  *  selected interface and reads the chip-id and calibration data of the sensor.
  */
-int8_t bmp3_init(struct bmp3_dev *dev)
+int8_t bmp3_init( struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t chip_id = 0;
 
     /* Check for null pointer in the device structure */
-    rslt = null_ptr_check(dev);
+    rslt = null_ptr_check( dev );
 
     /* Proceed if null check is fine */
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
         /* Read mechanism according to selected interface */
-        if (dev->intf != BMP3_I2C_INTF)
+        if ( dev->intf != BMP3_I2C_INTF )
         {
             /* If SPI interface is selected, read extra byte */
             dev->dummy_byte = 1;
@@ -760,22 +748,22 @@ int8_t bmp3_init(struct bmp3_dev *dev)
         }
 
         /* Read the chip-id of bmp3 sensor */
-        rslt = bmp3_get_regs(BMP3_REG_CHIP_ID, &chip_id, 1, dev);
+        rslt = bmp3_get_regs( BMP3_REG_CHIP_ID, &chip_id, 1, dev );
 
         /* Proceed if everything is fine until now */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Check for chip id validity */
-            if ((chip_id == BMP3_CHIP_ID) || (chip_id == BMP390_CHIP_ID))
+            if (( chip_id == BMP3_CHIP_ID ) || ( chip_id == BMP390_CHIP_ID ))
             {
                 dev->chip_id = chip_id;
 
                 /* Reset the sensor */
-                rslt = bmp3_soft_reset(dev);
-                if (rslt == BMP3_OK)
+                rslt = bmp3_soft_reset( dev );
+                if ( rslt == BMP3_OK )
                 {
                     /* Read the calibration data */
-                    rslt = get_calib_data(dev);
+                    rslt = get_calib_data( dev );
                 }
             }
             else
@@ -791,40 +779,40 @@ int8_t bmp3_init(struct bmp3_dev *dev)
 /*!
  * @brief This API reads the data from the given register address of the sensor.
  */
-int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bmp3_dev *dev)
+int8_t bmp3_get_regs( uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint32_t idx;
 
     /* Check for null pointer in the device structure */
-    rslt = null_ptr_check(dev);
+    rslt = null_ptr_check( dev );
 
     /* Proceed if null check is fine */
-    if ((rslt == BMP3_OK) && (reg_data != NULL))
+    if (( rslt == BMP3_OK ) && ( reg_data != NULL))
     {
         uint32_t temp_len = len + dev->dummy_byte;
         uint8_t temp_buff[len + dev->dummy_byte];
 
         /* If interface selected is SPI */
-        if (dev->intf != BMP3_I2C_INTF)
+        if ( dev->intf != BMP3_I2C_INTF )
         {
             reg_addr = reg_addr | 0x80;
 
             /* Read the data from the register */
-            dev->intf_rslt = dev->read(reg_addr, temp_buff, temp_len, dev->intf_ptr);
-            for (idx = 0; idx < len; idx++)
+            dev->intf_rslt = dev->read( reg_addr, temp_buff, temp_len, dev->intf_ptr );
+            for ( idx = 0; idx < len; idx++ )
             {
-                reg_data[idx] = temp_buff[idx + dev->dummy_byte];
+                reg_data[ idx ] = temp_buff[ idx + dev->dummy_byte ];
             }
         }
         else
         {
             /* Read the data using I2C */
-            dev->intf_rslt = dev->read(reg_addr, reg_data, len, dev->intf_ptr);
+            dev->intf_rslt = dev->read( reg_addr, reg_data, len, dev->intf_ptr );
         }
 
         /* Check for communication error */
-        if (dev->intf_rslt != BMP3_INTF_RET_SUCCESS)
+        if ( dev->intf_rslt != BMP3_INTF_RET_SUCCESS )
         {
             rslt = BMP3_E_COMM_FAIL;
         }
@@ -841,7 +829,7 @@ int8_t bmp3_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, struct b
  * @brief This API writes the given data to the register address
  * of the sensor.
  */
-int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bmp3_dev *dev)
+int8_t bmp3_set_regs( uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t temp_buff[len * 2];
@@ -849,30 +837,30 @@ int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, s
     uint8_t reg_addr_cnt;
 
     /* Check for null pointer in the device structure */
-    rslt = null_ptr_check(dev);
+    rslt = null_ptr_check( dev );
 
     /* Check for arguments validity */
-    if ((rslt == BMP3_OK) && (reg_addr != NULL) && (reg_data != NULL))
+    if (( rslt == BMP3_OK ) && ( reg_addr != NULL) && ( reg_data != NULL))
     {
-        if (len != 0)
+        if ( len != 0 )
         {
-            temp_buff[0] = reg_data[0];
+            temp_buff[ 0 ] = reg_data[ 0 ];
 
             /* If interface selected is SPI */
-            if (dev->intf == BMP3_SPI_INTF)
+            if ( dev->intf == BMP3_SPI_INTF )
             {
-                for (reg_addr_cnt = 0; reg_addr_cnt < len; reg_addr_cnt++)
+                for ( reg_addr_cnt = 0; reg_addr_cnt < len; reg_addr_cnt++ )
                 {
-                    reg_addr[reg_addr_cnt] = reg_addr[reg_addr_cnt] & 0x7F;
+                    reg_addr[ reg_addr_cnt ] = reg_addr[ reg_addr_cnt ] & 0x7F;
                 }
             }
 
             /* Burst write mode */
-            if (len > 1)
+            if ( len > 1 )
             {
                 /* Interleave register address w.r.t data for
                  * burst write*/
-                interleave_reg_addr(reg_addr, temp_buff, reg_data, len);
+                interleave_reg_addr( reg_addr, temp_buff, reg_data, len );
                 temp_len = len * 2;
             }
             else
@@ -880,10 +868,10 @@ int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, s
                 temp_len = len;
             }
 
-            dev->intf_rslt = dev->write(reg_addr[0], temp_buff, temp_len, dev->intf_ptr);
+            dev->intf_rslt = dev->write( reg_addr[ 0 ], temp_buff, temp_len, dev->intf_ptr );
 
             /* Check for communication error */
-            if (dev->intf_rslt != BMP3_INTF_RET_SUCCESS)
+            if ( dev->intf_rslt != BMP3_INTF_RET_SUCCESS )
             {
                 rslt = BMP3_E_COMM_FAIL;
             }
@@ -906,35 +894,35 @@ int8_t bmp3_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint32_t len, s
  * temperature enable), over sampling, ODR and filter
  * settings in the sensor.
  */
-int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev)
+int8_t bmp3_set_sensor_settings( uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt = BMP3_OK;
 
-    if (settings != NULL)
+    if ( settings != NULL)
     {
 
-        if (are_settings_changed(BMP3_POWER_CNTL, desired_settings))
+        if ( are_settings_changed( BMP3_POWER_CNTL, desired_settings ))
         {
             /* Set the power control settings */
-            rslt = set_pwr_ctrl_settings(desired_settings, settings, dev);
+            rslt = set_pwr_ctrl_settings( desired_settings, settings, dev );
         }
 
-        if (are_settings_changed(BMP3_ODR_FILTER, desired_settings))
+        if ( are_settings_changed( BMP3_ODR_FILTER, desired_settings ))
         {
             /* Set the over sampling, ODR and filter settings */
-            rslt = set_odr_filter_settings(desired_settings, settings, dev);
+            rslt = set_odr_filter_settings( desired_settings, settings, dev );
         }
 
-        if (are_settings_changed(BMP3_INT_CTRL, desired_settings))
+        if ( are_settings_changed( BMP3_INT_CTRL, desired_settings ))
         {
             /* Set the interrupt control settings */
-            rslt = set_int_ctrl_settings(desired_settings, settings, dev);
+            rslt = set_int_ctrl_settings( desired_settings, settings, dev );
         }
 
-        if (are_settings_changed(BMP3_ADV_SETT, desired_settings))
+        if ( are_settings_changed( BMP3_ADV_SETT, desired_settings ))
         {
             /* Set the advance settings */
-            rslt = set_advance_settings(desired_settings, settings, dev);
+            rslt = set_advance_settings( desired_settings, settings, dev );
         }
     }
     else
@@ -950,19 +938,19 @@ int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_settings 
  * temperature enable), over sampling, ODR, filter, interrupt control and
  * advance settings from the sensor.
  */
-int8_t bmp3_get_sensor_settings(struct bmp3_settings *settings, struct bmp3_dev *dev)
+int8_t bmp3_get_sensor_settings( struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t settings_data[BMP3_LEN_GEN_SETT];
 
-    if (settings != NULL)
+    if ( settings != NULL)
     {
-        rslt = bmp3_get_regs(BMP3_REG_INT_CTRL, settings_data, BMP3_LEN_GEN_SETT, dev);
+        rslt = bmp3_get_regs( BMP3_REG_INT_CTRL, settings_data, BMP3_LEN_GEN_SETT, dev );
 
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Parse the settings data */
-            parse_sett_data(settings_data, settings);
+            parse_sett_data( settings_data, settings );
         }
     }
     else
@@ -979,34 +967,33 @@ int8_t bmp3_get_sensor_settings(struct bmp3_settings *settings, struct bmp3_dev 
  * fifo_config_2(fifo_subsampling, data_select) and int_ctrl(fwtm_en, ffull_en)
  * settings in the sensor.
  */
-int8_t bmp3_set_fifo_settings(uint16_t desired_settings,
-                              const struct bmp3_fifo_settings *fifo_settings,
-                              struct bmp3_dev *dev)
+int8_t bmp3_set_fifo_settings(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
 
     /* Check for null pointer in the device structure */
-    rslt = null_ptr_check(dev);
+    rslt = null_ptr_check( dev );
 
     /* Proceed if null check is fine */
-    if ((rslt == BMP3_OK) && (fifo_settings != NULL))
+    if (( rslt == BMP3_OK ) && ( fifo_settings != NULL))
     {
-        if (are_settings_changed(BMP3_FIFO_CONFIG_1, desired_settings))
+        if ( are_settings_changed( BMP3_FIFO_CONFIG_1, desired_settings ))
         {
             /* Fill the FIFO config 1 register data */
-            rslt = fill_fifo_config_1(desired_settings, fifo_settings, dev);
+            rslt = fill_fifo_config_1( desired_settings, fifo_settings, dev );
         }
 
-        if (are_settings_changed(desired_settings, BMP3_FIFO_CONFIG_2))
+        if ( are_settings_changed( desired_settings, BMP3_FIFO_CONFIG_2 ))
         {
             /* Fill the FIFO config 2 register data */
-            rslt = fill_fifo_config_2(desired_settings, fifo_settings, dev);
+            rslt = fill_fifo_config_2( desired_settings, fifo_settings, dev );
         }
 
-        if (are_settings_changed(desired_settings, BMP3_FIFO_INT_CTRL))
+        if ( are_settings_changed( desired_settings, BMP3_FIFO_INT_CTRL ))
         {
             /* Fill the FIFO interrupt ctrl register data */
-            rslt = fill_fifo_int_ctrl(desired_settings, fifo_settings, dev);
+            rslt = fill_fifo_int_ctrl( desired_settings, fifo_settings, dev );
         }
     }
     else
@@ -1023,19 +1010,19 @@ int8_t bmp3_set_fifo_settings(uint16_t desired_settings,
  * fifo_config_2(fifo_subsampling, data_select) and int_ctrl(fwtm_en, ffull_en)
  * settings from the sensor.
  */
-int8_t bmp3_get_fifo_settings(struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev)
+int8_t bmp3_get_fifo_settings( struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t fifo_sett[3];
     uint8_t len = 3;
 
     /* Proceed if null check is fine */
-    if (fifo_settings != NULL)
+    if ( fifo_settings != NULL)
     {
-        rslt = bmp3_get_regs(BMP3_REG_FIFO_CONFIG_1, fifo_sett, len, dev);
+        rslt = bmp3_get_regs( BMP3_REG_FIFO_CONFIG_1, fifo_sett, len, dev );
 
         /* Parse the fifo settings */
-        parse_fifo_settings(fifo_sett, fifo_settings);
+        parse_fifo_settings( fifo_sett, fifo_settings );
     }
     else
     {
@@ -1048,24 +1035,23 @@ int8_t bmp3_get_fifo_settings(struct bmp3_fifo_settings *fifo_settings, struct b
 /*!
  * @brief This API gets the fifo data from the sensor.
  */
-int8_t bmp3_get_fifo_data(struct bmp3_fifo_data *fifo,
-                          const struct bmp3_fifo_settings *fifo_settings,
-                          struct bmp3_dev *dev)
+int8_t bmp3_get_fifo_data(
+    struct bmp3_fifo_data *fifo, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint16_t fifo_len;
 
-    if ((fifo != NULL) && (fifo_settings != NULL))
+    if (( fifo != NULL) && ( fifo_settings != NULL))
     {
-        reset_fifo_index(fifo);
+        reset_fifo_index( fifo );
 
         /* Get the total number of bytes available in FIFO */
-        rslt = bmp3_get_fifo_length(&fifo_len, dev);
+        rslt = bmp3_get_fifo_length( &fifo_len, dev );
 
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* For sensor time frame , add additional overhead bytes */
-            if (fifo_settings->time_en == TRUE)
+            if ( fifo_settings->time_en == TRUE )
             {
                 fifo_len = fifo_len + BMP3_SENSORTIME_OVERHEAD_BYTES;
             }
@@ -1074,7 +1060,7 @@ int8_t bmp3_get_fifo_data(struct bmp3_fifo_data *fifo,
             fifo->byte_count = fifo_len;
 
             /* Read the fifo data */
-            rslt = bmp3_get_regs(BMP3_REG_FIFO_DATA, fifo->buffer, fifo_len, dev);
+            rslt = bmp3_get_regs( BMP3_REG_FIFO_DATA, fifo->buffer, fifo_len, dev );
         }
     }
     else
@@ -1089,24 +1075,26 @@ int8_t bmp3_get_fifo_data(struct bmp3_fifo_data *fifo,
  * @brief This API sets the fifo watermark length according to the frames count
  * set by the user in the device structure. Refer below for usage.
  */
-int8_t bmp3_set_fifo_watermark(const struct bmp3_fifo_data *fifo,
-                               const struct bmp3_fifo_settings *fifo_settings,
-                               struct bmp3_dev *dev)
+int8_t bmp3_set_fifo_watermark(
+    const struct bmp3_fifo_data *fifo, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data[2];
-    uint8_t reg_addr[2] = { BMP3_REG_FIFO_WM, BMP3_REG_FIFO_WM + 1 };
+    uint8_t reg_addr[2] = {
+        BMP3_REG_FIFO_WM,
+        BMP3_REG_FIFO_WM + 1
+    };
     uint16_t watermark_len;
 
-    if ((fifo != NULL) && (fifo_settings != NULL))
+    if (( fifo != NULL) && ( fifo_settings != NULL))
     {
-        rslt = convert_frames_to_bytes(&watermark_len, fifo, fifo_settings);
+        rslt = convert_frames_to_bytes( &watermark_len, fifo, fifo_settings );
 
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
-            reg_data[0] = BMP3_GET_LSB(watermark_len);
-            reg_data[1] = BMP3_GET_MSB(watermark_len) & 0x01;
-            rslt = bmp3_set_regs(reg_addr, reg_data, 2, dev);
+            reg_data[ 0 ] = BMP3_GET_LSB( watermark_len );
+            reg_data[ 1 ] = BMP3_GET_MSB( watermark_len ) & 0x01;
+            rslt = bmp3_set_regs( reg_addr, reg_data, 2, dev );
         }
     }
     else
@@ -1121,18 +1109,18 @@ int8_t bmp3_set_fifo_watermark(const struct bmp3_fifo_data *fifo,
  * @brief This API sets the fifo watermark length according to the frames count
  * set by the user in the device structure. Refer below for usage.
  */
-int8_t bmp3_get_fifo_watermark(uint16_t *watermark_len, struct bmp3_dev *dev)
+int8_t bmp3_get_fifo_watermark( uint16_t *watermark_len, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data[2];
     uint8_t reg_addr = BMP3_REG_FIFO_WM;
 
-    if (watermark_len != NULL)
+    if ( watermark_len != NULL)
     {
-        rslt = bmp3_get_regs(reg_addr, reg_data, 2, dev);
-        if (rslt == BMP3_OK)
+        rslt = bmp3_get_regs( reg_addr, reg_data, 2, dev );
+        if ( rslt == BMP3_OK )
         {
-            *watermark_len = (reg_data[0]) + (reg_data[1] << 8);
+            *watermark_len = ( reg_data[ 0 ] ) + ( reg_data[ 1 ] << 8 );
         }
     }
     else
@@ -1147,7 +1135,7 @@ int8_t bmp3_get_fifo_watermark(uint16_t *watermark_len, struct bmp3_dev *dev)
  * @brief This API extracts the temperature and/or pressure data from the FIFO
  * data which is already read from the fifo.
  */
-int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_fifo_data *fifo, struct bmp3_dev *dev)
+int8_t bmp3_extract_fifo_data( struct bmp3_data *data, struct bmp3_fifo_data *fifo, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t header;
@@ -1155,27 +1143,27 @@ int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_fifo_data *fif
     uint8_t t_p_frame;
     struct bmp3_uncomp_data uncomp_data = { 0 };
 
-    rslt = null_ptr_check(dev);
+    rslt = null_ptr_check( dev );
 
-    if ((rslt == BMP3_OK) && (fifo != NULL) && (data != NULL))
+    if (( rslt == BMP3_OK ) && ( fifo != NULL) && ( data != NULL))
     {
         uint16_t byte_index = fifo->start_idx;
 
-        while (byte_index < fifo->byte_count)
+        while ( byte_index < fifo->byte_count )
         {
-            get_header_info(&header, fifo->buffer, &byte_index);
-            t_p_frame = parse_fifo_data_frame(header, fifo, &byte_index, &uncomp_data, &parsed_frames);
+            get_header_info( &header, fifo->buffer, &byte_index );
+            t_p_frame = parse_fifo_data_frame( header, fifo, &byte_index, &uncomp_data, &parsed_frames );
 
             /* If the frame is pressure and/or temperature data */
-            if (t_p_frame != FALSE)
+            if ( t_p_frame != FALSE )
             {
                 /* Compensate temperature and pressure data */
-                rslt = compensate_data(t_p_frame, &uncomp_data, &data[parsed_frames - 1], &dev->calib_data);
+                rslt = compensate_data( t_p_frame, &uncomp_data, &data[ parsed_frames - 1 ], &dev->calib_data );
             }
         }
 
         /* Check if any frames are parsed in FIFO */
-        if (parsed_frames != 0)
+        if ( parsed_frames != 0 )
         {
             /* Update the bytes parsed in the device structure */
             fifo->start_idx = byte_index;
@@ -1201,24 +1189,24 @@ int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_fifo_data *fif
  * temperature and interrupt (fifo watermark, fifo full, data ready) and
  * error status from the sensor.
  */
-int8_t bmp3_get_status(struct bmp3_status *status, struct bmp3_dev *dev)
+int8_t bmp3_get_status( struct bmp3_status *status, struct bmp3_dev *dev )
 {
     int8_t rslt;
 
-    if (status != NULL)
+    if ( status != NULL)
     {
-        rslt = get_sensor_status(status, dev);
+        rslt = get_sensor_status( status, dev );  // 2x read
 
         /* Proceed further if the earlier operation is fine */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
-            rslt = get_int_status(status, dev);
+            rslt = get_int_status( status, dev );  // 1x read
 
             /* Proceed further if the earlier operation is fine */
-            if (rslt == BMP3_OK)
+            if ( rslt == BMP3_OK )
             {
                 /* Get the error status */
-                rslt = get_err_status(status, dev);
+                rslt = get_err_status( status, dev );  // 1x read
             }
         }
     }
@@ -1233,20 +1221,20 @@ int8_t bmp3_get_status(struct bmp3_status *status, struct bmp3_dev *dev)
 /*!
  * @brief This API gets the fifo length from the sensor.
  */
-int8_t bmp3_get_fifo_length(uint16_t *fifo_length, struct bmp3_dev *dev)
+int8_t bmp3_get_fifo_length( uint16_t *fifo_length, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data[2];
 
-    if (fifo_length != NULL)
+    if ( fifo_length != NULL)
     {
-        rslt = bmp3_get_regs(BMP3_REG_FIFO_LENGTH, reg_data, 2, dev);
+        rslt = bmp3_get_regs( BMP3_REG_FIFO_LENGTH, reg_data, 2, dev );
 
         /* Proceed if read from register is fine */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Update the fifo length */
-            *fifo_length = BMP3_CONCAT_BYTES(reg_data[1], reg_data[0]);
+            *fifo_length = BMP3_CONCAT_BYTES( reg_data[ 1 ], reg_data[ 0 ] );
         }
     }
     else
@@ -1260,7 +1248,7 @@ int8_t bmp3_get_fifo_length(uint16_t *fifo_length, struct bmp3_dev *dev)
 /*!
  * @brief This API performs the soft reset of the sensor.
  */
-int8_t bmp3_soft_reset(struct bmp3_dev *dev)
+int8_t bmp3_soft_reset( struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_CMD;
@@ -1271,25 +1259,25 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev)
     uint8_t cmd_err_status;
 
     /* Check for command ready status */
-    rslt = bmp3_get_regs(BMP3_REG_SENS_STATUS, &cmd_rdy_status, 1, dev);
+    rslt = bmp3_get_regs( BMP3_REG_SENS_STATUS, &cmd_rdy_status, 1, dev );
 
     /* Device is ready to accept new command */
-    if ((cmd_rdy_status & BMP3_CMD_RDY) && (rslt == BMP3_OK))
+    if (( cmd_rdy_status & BMP3_CMD_RDY ) && ( rslt == BMP3_OK ))
     {
         /* Write the soft reset command in the sensor */
-        rslt = bmp3_set_regs(&reg_addr, &soft_rst_cmd, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &soft_rst_cmd, 1, dev );
 
         /* Proceed if everything is fine until now */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Wait for 2 ms */
-            dev->delay_us(2000, dev->intf_ptr);
+            dev->delay_us( 2000, dev->intf_ptr );
 
             /* Read for command error status */
-            rslt = bmp3_get_regs(BMP3_REG_ERR, &cmd_err_status, 1, dev);
+            rslt = bmp3_get_regs( BMP3_REG_ERR, &cmd_err_status, 1, dev );
 
             /* check for command error status */
-            if ((cmd_err_status & BMP3_REG_CMD) || (rslt != BMP3_OK))
+            if (( cmd_err_status & BMP3_REG_CMD ) || ( rslt != BMP3_OK ))
             {
                 /* Command not written hence return
                  * error */
@@ -1304,7 +1292,7 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev)
 /*!
  * @brief This API performs the soft reset of the sensor.
  */
-int8_t bmp3_fifo_flush(struct bmp3_dev *dev)
+int8_t bmp3_fifo_flush( struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_CMD;
@@ -1314,25 +1302,25 @@ int8_t bmp3_fifo_flush(struct bmp3_dev *dev)
     uint8_t cmd_err_status;
 
     /* Check for command ready status */
-    rslt = bmp3_get_regs(BMP3_REG_SENS_STATUS, &cmd_rdy_status, 1, dev);
+    rslt = bmp3_get_regs( BMP3_REG_SENS_STATUS, &cmd_rdy_status, 1, dev );
 
     /* Device is ready to accept new command */
-    if ((cmd_rdy_status & BMP3_CMD_RDY) && (rslt == BMP3_OK))
+    if (( cmd_rdy_status & BMP3_CMD_RDY ) && ( rslt == BMP3_OK ))
     {
         /* Write the soft reset command in the sensor */
-        rslt = bmp3_set_regs(&reg_addr, &fifo_flush_cmd, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &fifo_flush_cmd, 1, dev );
 
         /* Proceed if everything is fine until now */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Wait for 2 ms */
-            dev->delay_us(2000, dev->intf_ptr);
+            dev->delay_us( 2000, dev->intf_ptr );
 
             /* Read for command error status */
-            rslt = bmp3_get_regs(BMP3_REG_ERR, &cmd_err_status, 1, dev);
+            rslt = bmp3_get_regs( BMP3_REG_ERR, &cmd_err_status, 1, dev );
 
             /* check for command error status */
-            if ((cmd_err_status & BMP3_REG_CMD) || (rslt != BMP3_OK))
+            if (( cmd_err_status & BMP3_REG_CMD ) || ( rslt != BMP3_OK ))
             {
                 /* Command not written hence return
                  * error */
@@ -1347,45 +1335,45 @@ int8_t bmp3_fifo_flush(struct bmp3_dev *dev)
 /*!
  * @brief This API sets the power mode of the sensor.
  */
-int8_t bmp3_set_op_mode(struct bmp3_settings *settings, struct bmp3_dev *dev)
+int8_t bmp3_set_op_mode( struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t last_set_mode;
 
     /* Check for null pointer in the device structure */
-    rslt = null_ptr_check(dev);
+    rslt = null_ptr_check( dev );
 
-    if ((rslt == BMP3_OK) && (settings != NULL))
+    if (( rslt == BMP3_OK ) && ( settings != NULL))
     {
         uint8_t curr_mode = settings->op_mode;
 
-        rslt = bmp3_get_op_mode(&last_set_mode, dev);
+        rslt = bmp3_get_op_mode( &last_set_mode, dev );
 
         /* If the sensor is not in sleep mode put the device to sleep
          * mode */
-        if ((last_set_mode != BMP3_MODE_SLEEP) && (rslt == BMP3_OK))
+        if (( last_set_mode != BMP3_MODE_SLEEP ) && ( rslt == BMP3_OK ))
         {
             /* Device should be put to sleep before transiting to
              * forced mode or normal mode */
-            rslt = put_device_to_sleep(dev);
+            rslt = put_device_to_sleep( dev );
 
             /* Give some time for device to go into sleep mode */
-            dev->delay_us(5000, dev->intf_ptr);
+            dev->delay_us( 5000, dev->intf_ptr );
         }
 
         /* Set the power mode */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
-            if (curr_mode == BMP3_MODE_NORMAL)
+            if ( curr_mode == BMP3_MODE_NORMAL )
             {
                 /* Set normal mode and validate
                  * necessary settings */
-                rslt = set_normal_mode(settings, dev);
+                rslt = set_normal_mode( settings, dev );
             }
-            else if (curr_mode == BMP3_MODE_FORCED)
+            else if ( curr_mode == BMP3_MODE_FORCED )
             {
                 /* Set forced mode */
-                rslt = write_power_mode(settings, dev);
+                rslt = write_power_mode( settings, dev );
             }
         }
     }
@@ -1400,17 +1388,17 @@ int8_t bmp3_set_op_mode(struct bmp3_settings *settings, struct bmp3_dev *dev)
 /*!
  * @brief This API gets the power mode of the sensor.
  */
-int8_t bmp3_get_op_mode(uint8_t *op_mode, struct bmp3_dev *dev)
+int8_t bmp3_get_op_mode( uint8_t *op_mode, struct bmp3_dev *dev )
 {
     int8_t rslt;
 
-    if (op_mode != NULL)
+    if ( op_mode != NULL)
     {
         /* Read the power mode register */
-        rslt = bmp3_get_regs(BMP3_REG_PWR_CTRL, op_mode, 1, dev);
+        rslt = bmp3_get_regs( BMP3_REG_PWR_CTRL, op_mode, 1, dev );
 
         /* Assign the power mode in the device structure */
-        *op_mode = BMP3_GET_BITS(*op_mode, BMP3_OP_MODE);
+        *op_mode = BMP3_GET_BITS( *op_mode, BMP3_OP_MODE );
     }
     else
     {
@@ -1425,7 +1413,7 @@ int8_t bmp3_get_op_mode(uint8_t *op_mode, struct bmp3_dev *dev)
  * sensor, compensates the data and store it in the bmp3_data structure
  * instance passed by the user.
  */
-int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *comp_data, struct bmp3_dev *dev)
+int8_t bmp3_get_sensor_data( uint8_t sensor_comp, struct bmp3_data *comp_data, struct bmp3_dev *dev )
 {
     int8_t rslt;
 
@@ -1434,19 +1422,19 @@ int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *comp_data, st
     uint8_t reg_data[BMP3_LEN_P_T_DATA] = { 0 };
     struct bmp3_uncomp_data uncomp_data = { 0 };
 
-    if (comp_data != NULL)
+    if ( comp_data != NULL)
     {
         /* Read the pressure and temperature data from the sensor */
-        rslt = bmp3_get_regs(BMP3_REG_DATA, reg_data, BMP3_LEN_P_T_DATA, dev);
+        rslt = bmp3_get_regs( BMP3_REG_DATA, reg_data, BMP3_LEN_P_T_DATA, dev );
 
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Parse the read data from the sensor */
-            parse_sensor_data(reg_data, &uncomp_data);
+            parse_sensor_data( reg_data, &uncomp_data );
 
             /* Compensate the pressure/temperature/both data read
              * from the sensor */
-            rslt = compensate_data(sensor_comp, &uncomp_data, comp_data, &dev->calib_data);
+            rslt = compensate_data( sensor_comp, &uncomp_data, comp_data, &dev->calib_data );
         }
     }
     else
@@ -1463,20 +1451,19 @@ int8_t bmp3_get_sensor_data(uint8_t sensor_comp, struct bmp3_data *comp_data, st
  * @brief This internal API converts the no. of frames required by the user to
  * bytes so as to write in the watermark length register.
  */
-static int8_t convert_frames_to_bytes(uint16_t *watermark_len,
-                                      const struct bmp3_fifo_data *fifo,
-                                      const struct bmp3_fifo_settings *fifo_settings)
+static int8_t convert_frames_to_bytes(
+    uint16_t *watermark_len, const struct bmp3_fifo_data *fifo, const struct bmp3_fifo_settings *fifo_settings )
 {
     int8_t rslt = BMP3_OK;
 
-    if ((fifo->req_frames > 0) && (fifo->req_frames <= BMP3_FIFO_MAX_FRAMES))
+    if (( fifo->req_frames > 0 ) && ( fifo->req_frames <= BMP3_FIFO_MAX_FRAMES ))
     {
-        if (fifo_settings->press_en && fifo_settings->temp_en)
+        if ( fifo_settings->press_en && fifo_settings->temp_en )
         {
             /* Multiply with pressure and temperature header len */
             *watermark_len = fifo->req_frames * BMP3_LEN_P_AND_T_HEADER_DATA;
         }
-        else if (fifo_settings->temp_en || fifo_settings->press_en)
+        else if ( fifo_settings->temp_en || fifo_settings->press_en )
         {
             /* Multiply with pressure or temperature header len */
             *watermark_len = fifo->req_frames * BMP3_LEN_P_OR_T_HEADER_DATA;
@@ -1501,7 +1488,7 @@ static int8_t convert_frames_to_bytes(uint16_t *watermark_len,
  * parsed frame count, configuration change, configuration error and
  * frame_not_available variables.
  */
-static void reset_fifo_index(struct bmp3_fifo_data *fifo)
+static void reset_fifo_index( struct bmp3_fifo_data *fifo )
 {
     /* Loop variable */
     uint16_t index;
@@ -1510,10 +1497,10 @@ static void reset_fifo_index(struct bmp3_fifo_data *fifo)
     uint16_t fifo_size = 512;
 
     /* The size of FIFO in BMP3 is 512 bytes */
-    for (index = 0; index < fifo_size; index++)
+    for ( index = 0; index < fifo_size; index++ )
     {
         /* Initialize data buffer to zero */
-        fifo->buffer[index] = 0;
+        fifo->buffer[ index ] = 0;
     }
 
     fifo->byte_count = 0;
@@ -1529,33 +1516,31 @@ static void reset_fifo_index(struct bmp3_fifo_data *fifo)
  * fills the byte count, uncompensated pressure and/or temperature data and no
  * of parsed frames.
  */
-static uint8_t parse_fifo_data_frame(uint8_t header,
-                                     struct bmp3_fifo_data *fifo,
-                                     uint16_t *byte_index,
-                                     struct bmp3_uncomp_data *uncomp_data,
-                                     uint8_t *parsed_frames)
+static uint8_t parse_fifo_data_frame(
+    uint8_t header, struct bmp3_fifo_data *fifo, uint16_t *byte_index, struct bmp3_uncomp_data *uncomp_data,
+    uint8_t *parsed_frames )
 {
     uint8_t t_p_frame = FALSE;
 
-    switch (header)
+    switch ( header )
     {
         case BMP3_FIFO_TEMP_PRESS_FRAME:
-            unpack_temp_press_frame(byte_index, fifo->buffer, uncomp_data);
+            unpack_temp_press_frame( byte_index, fifo->buffer, uncomp_data );
             *parsed_frames = *parsed_frames + 1;
             t_p_frame = BMP3_PRESS_TEMP;
             break;
         case BMP3_FIFO_TEMP_FRAME:
-            unpack_temp_frame(byte_index, fifo->buffer, uncomp_data);
+            unpack_temp_frame( byte_index, fifo->buffer, uncomp_data );
             *parsed_frames = *parsed_frames + 1;
             t_p_frame = BMP3_TEMP;
             break;
         case BMP3_FIFO_PRESS_FRAME:
-            unpack_press_frame(byte_index, fifo->buffer, uncomp_data);
+            unpack_press_frame( byte_index, fifo->buffer, uncomp_data );
             *parsed_frames = *parsed_frames + 1;
             t_p_frame = BMP3_PRESS;
             break;
         case BMP3_FIFO_TIME_FRAME:
-            unpack_time_frame(byte_index, fifo->buffer, &fifo->sensor_time);
+            unpack_time_frame( byte_index, fifo->buffer, &fifo->sensor_time );
             break;
         case BMP3_FIFO_CONFIG_CHANGE:
             fifo->config_change = 1;
@@ -1581,11 +1566,10 @@ static uint8_t parse_fifo_data_frame(uint8_t header,
  * @brief This internal API unpacks the FIFO data frame from the fifo buffer and
  * fills the byte count, uncompensated pressure and/or temperature data.
  */
-static void unpack_temp_press_frame(uint16_t *byte_index,
-                                    const uint8_t *fifo_buffer,
-                                    struct bmp3_uncomp_data *uncomp_data)
+static void unpack_temp_press_frame(
+    uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data )
 {
-    parse_fifo_sensor_data((BMP3_PRESS_TEMP), &fifo_buffer[*byte_index], uncomp_data);
+    parse_fifo_sensor_data(( BMP3_PRESS_TEMP ), &fifo_buffer[ *byte_index ], uncomp_data );
     *byte_index = *byte_index + BMP3_LEN_P_T_DATA;
 }
 
@@ -1593,9 +1577,9 @@ static void unpack_temp_press_frame(uint16_t *byte_index,
  * @brief This internal API unpacks the FIFO data frame from the fifo buffer and
  * fills the byte count and uncompensated temperature data.
  */
-static void unpack_temp_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data)
+static void unpack_temp_frame( uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data )
 {
-    parse_fifo_sensor_data(BMP3_TEMP, &fifo_buffer[*byte_index], uncomp_data);
+    parse_fifo_sensor_data( BMP3_TEMP, &fifo_buffer[ *byte_index ], uncomp_data );
     *byte_index = *byte_index + BMP3_LEN_T_DATA;
 }
 
@@ -1603,9 +1587,9 @@ static void unpack_temp_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, 
  * @brief This internal API unpacks the FIFO data frame from the fifo buffer and
  * fills the byte count and uncompensated pressure data.
  */
-static void unpack_press_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data)
+static void unpack_press_frame( uint16_t *byte_index, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data )
 {
-    parse_fifo_sensor_data(BMP3_PRESS, &fifo_buffer[*byte_index], uncomp_data);
+    parse_fifo_sensor_data( BMP3_PRESS, &fifo_buffer[ *byte_index ], uncomp_data );
     *byte_index = *byte_index + BMP3_LEN_P_DATA;
 }
 
@@ -1613,12 +1597,12 @@ static void unpack_press_frame(uint16_t *byte_index, const uint8_t *fifo_buffer,
  * @brief This internal API unpacks the time frame from the fifo data buffer and
  * fills the byte count and update the sensor time variable.
  */
-static void unpack_time_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, uint32_t *sensor_time)
+static void unpack_time_frame( uint16_t *byte_index, const uint8_t *fifo_buffer, uint32_t *sensor_time )
 {
     uint16_t index = *byte_index;
-    uint32_t xlsb = fifo_buffer[index];
-    uint32_t lsb = ((uint32_t)fifo_buffer[index + 1]) << 8;
-    uint32_t msb = ((uint32_t)fifo_buffer[index + 2]) << 16;
+    uint32_t xlsb = fifo_buffer[ index ];
+    uint32_t lsb = (( uint32_t ) fifo_buffer[ index + 1 ] ) << 8;
+    uint32_t msb = (( uint32_t ) fifo_buffer[ index + 2 ] ) << 16;
 
     *sensor_time = msb | lsb | xlsb;
     *byte_index = *byte_index + BMP3_LEN_SENSOR_TIME;
@@ -1628,8 +1612,8 @@ static void unpack_time_frame(uint16_t *byte_index, const uint8_t *fifo_buffer, 
  * @brief This internal API parses the FIFO data frame from the fifo buffer and
  * fills uncompensated temperature and/or pressure data.
  */
-static void parse_fifo_sensor_data(uint8_t sensor_comp, const uint8_t *fifo_buffer,
-                                   struct bmp3_uncomp_data *uncomp_data)
+static void parse_fifo_sensor_data(
+    uint8_t sensor_comp, const uint8_t *fifo_buffer, struct bmp3_uncomp_data *uncomp_data )
 {
     /* Temporary variables to store the sensor data */
     uint32_t data_xlsb;
@@ -1637,30 +1621,30 @@ static void parse_fifo_sensor_data(uint8_t sensor_comp, const uint8_t *fifo_buff
     uint32_t data_msb;
 
     /* Store the parsed register values for temperature data */
-    data_xlsb = (uint32_t)fifo_buffer[0];
-    data_lsb = (uint32_t)fifo_buffer[1] << 8;
-    data_msb = (uint32_t)fifo_buffer[2] << 16;
+    data_xlsb = ( uint32_t ) fifo_buffer[ 0 ];
+    data_lsb = ( uint32_t ) fifo_buffer[ 1 ] << 8;
+    data_msb = ( uint32_t ) fifo_buffer[ 2 ] << 16;
 
-    if (sensor_comp == BMP3_TEMP)
+    if ( sensor_comp == BMP3_TEMP )
     {
         /* Update uncompensated temperature */
         uncomp_data->temperature = data_msb | data_lsb | data_xlsb;
     }
 
-    if (sensor_comp == BMP3_PRESS)
+    if ( sensor_comp == BMP3_PRESS )
     {
         /* Update uncompensated pressure */
         uncomp_data->pressure = data_msb | data_lsb | data_xlsb;
     }
 
-    if (sensor_comp == (BMP3_PRESS_TEMP))
+    if ( sensor_comp == ( BMP3_PRESS_TEMP ))
     {
         uncomp_data->temperature = data_msb | data_lsb | data_xlsb;
 
         /* Store the parsed register values for pressure data */
-        data_xlsb = (uint32_t)fifo_buffer[3];
-        data_lsb = (uint32_t)fifo_buffer[4] << 8;
-        data_msb = (uint32_t)fifo_buffer[5] << 16;
+        data_xlsb = ( uint32_t ) fifo_buffer[ 3 ];
+        data_lsb = ( uint32_t ) fifo_buffer[ 4 ] << 8;
+        data_msb = ( uint32_t ) fifo_buffer[ 5 ] << 16;
         uncomp_data->pressure = data_msb | data_lsb | data_xlsb;
     }
 }
@@ -1668,37 +1652,37 @@ static void parse_fifo_sensor_data(uint8_t sensor_comp, const uint8_t *fifo_buff
 /*!
  * @brief This internal API parses the FIFO buffer and gets the header info.
  */
-static void get_header_info(uint8_t *header, const uint8_t *fifo_buffer, uint16_t *byte_index)
+static void get_header_info( uint8_t *header, const uint8_t *fifo_buffer, uint16_t *byte_index )
 {
-    *header = fifo_buffer[*byte_index];
+    *header = fifo_buffer[ *byte_index ];
     *byte_index = *byte_index + 1;
 }
 
 /*!
  * @brief This internal API sets the normal mode in the sensor.
  */
-static int8_t set_normal_mode(struct bmp3_settings *settings, struct bmp3_dev *dev)
+static int8_t set_normal_mode( struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t conf_err_status;
 
-    rslt = validate_normal_mode_settings(settings, dev);
+    rslt = validate_normal_mode_settings( settings, dev );
 
     /* If OSR and ODR settings are proper then write the power mode */
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        rslt = write_power_mode(settings, dev);
+        rslt = write_power_mode( settings, dev );
 
         /* check for configuration error */
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Read the configuration error status */
-            rslt = bmp3_get_regs(BMP3_REG_ERR, &conf_err_status, 1, dev);
+            rslt = bmp3_get_regs( BMP3_REG_ERR, &conf_err_status, 1, dev );
 
             /* Check if conf. error flag is set */
-            if (rslt == BMP3_OK)
+            if ( rslt == BMP3_OK )
             {
-                if (conf_err_status & BMP3_ERR_CONF)
+                if ( conf_err_status & BMP3_ERR_CONF )
                 {
                     /* OSR and ODR configuration is not proper */
                     rslt = BMP3_E_CONFIGURATION_ERR;
@@ -1713,7 +1697,7 @@ static int8_t set_normal_mode(struct bmp3_settings *settings, struct bmp3_dev *d
 /*!
  * @brief This internal API writes the power mode in the sensor.
  */
-static int8_t write_power_mode(const struct bmp3_settings *settings, struct bmp3_dev *dev)
+static int8_t write_power_mode( const struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_PWR_CTRL;
@@ -1723,15 +1707,15 @@ static int8_t write_power_mode(const struct bmp3_settings *settings, struct bmp3
     uint8_t op_mode_reg_val;
 
     /* Read the power mode register */
-    rslt = bmp3_get_regs(reg_addr, &op_mode_reg_val, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &op_mode_reg_val, 1, dev );
 
     /* Set the power mode */
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        op_mode_reg_val = BMP3_SET_BITS(op_mode_reg_val, BMP3_OP_MODE, op_mode);
+        op_mode_reg_val = BMP3_SET_BITS( op_mode_reg_val, BMP3_OP_MODE, op_mode );
 
         /* Write the power mode in the register */
-        rslt = bmp3_set_regs(&reg_addr, &op_mode_reg_val, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &op_mode_reg_val, 1, dev );
     }
 
     return rslt;
@@ -1740,7 +1724,7 @@ static int8_t write_power_mode(const struct bmp3_settings *settings, struct bmp3
 /*!
  * @brief This internal API puts the device to sleep mode.
  */
-static int8_t put_device_to_sleep(struct bmp3_dev *dev)
+static int8_t put_device_to_sleep( struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_PWR_CTRL;
@@ -1748,15 +1732,15 @@ static int8_t put_device_to_sleep(struct bmp3_dev *dev)
     /* Temporary variable to store the value read from op-mode register */
     uint8_t op_mode_reg_val;
 
-    rslt = bmp3_get_regs(BMP3_REG_PWR_CTRL, &op_mode_reg_val, 1, dev);
+    rslt = bmp3_get_regs( BMP3_REG_PWR_CTRL, &op_mode_reg_val, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
         /* Set the power mode */
-        op_mode_reg_val = op_mode_reg_val & (~(BMP3_OP_MODE_MSK));
+        op_mode_reg_val = op_mode_reg_val & ( ~( BMP3_OP_MODE_MSK ));
 
         /* Write the power mode in the register */
-        rslt = bmp3_set_regs(&reg_addr, &op_mode_reg_val, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &op_mode_reg_val, 1, dev );
     }
 
     return rslt;
@@ -1765,15 +1749,15 @@ static int8_t put_device_to_sleep(struct bmp3_dev *dev)
 /*!
  * @brief This internal API validate the normal mode settings of the sensor.
  */
-static int8_t validate_normal_mode_settings(struct bmp3_settings *settings, struct bmp3_dev *dev)
+static int8_t validate_normal_mode_settings( struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
 
-    rslt = get_odr_filter_settings(settings, dev);
+    rslt = get_odr_filter_settings( settings, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        rslt = validate_osr_and_odr_settings(settings);
+        rslt = validate_osr_and_odr_settings( settings );
     }
 
     return rslt;
@@ -1783,7 +1767,7 @@ static int8_t validate_normal_mode_settings(struct bmp3_settings *settings, stru
  * @brief This internal API reads the calibration data from the sensor, parse
  * it then compensates it and store in the device structure.
  */
-static int8_t get_calib_data(struct bmp3_dev *dev)
+static int8_t get_calib_data( struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_CALIB_DATA;
@@ -1792,10 +1776,10 @@ static int8_t get_calib_data(struct bmp3_dev *dev)
     uint8_t calib_data[BMP3_LEN_CALIB_DATA] = { 0 };
 
     /* Read the calibration data from the sensor */
-    rslt = bmp3_get_regs(reg_addr, calib_data, BMP3_LEN_CALIB_DATA, dev);
+    rslt = bmp3_get_regs( reg_addr, calib_data, BMP3_LEN_CALIB_DATA, dev );
 
     /* Parse calibration data and store it in device structure */
-    parse_calib_data(calib_data, dev);
+    parse_calib_data( calib_data, dev );
 
     return rslt;
 }
@@ -1804,14 +1788,14 @@ static int8_t get_calib_data(struct bmp3_dev *dev)
  * @brief This internal API interleaves the register address between the
  * register data buffer for burst write operation.
  */
-static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff, const uint8_t *reg_data, uint32_t len)
+static void interleave_reg_addr( const uint8_t *reg_addr, uint8_t *temp_buff, const uint8_t *reg_data, uint32_t len )
 {
     uint32_t index;
 
-    for (index = 1; index < len; index++)
+    for ( index = 1; index < len; index++ )
     {
-        temp_buff[(index * 2) - 1] = reg_addr[index];
-        temp_buff[index * 2] = reg_data[index];
+        temp_buff[ ( index * 2 ) - 1 ] = reg_addr[ index ];
+        temp_buff[ index * 2 ] = reg_data[ index ];
     }
 }
 
@@ -1820,102 +1804,102 @@ static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff, con
  * and temperature enable), over sampling, ODR, filter, interrupt control and
  * advance settings and store in the device structure.
  */
-static void parse_sett_data(const uint8_t *reg_data, struct bmp3_settings *settings)
+static void parse_sett_data( const uint8_t *reg_data, struct bmp3_settings *settings )
 {
     /* Parse interrupt control settings and store in device structure */
-    parse_int_ctrl_settings(&reg_data[0], &settings->int_settings);
+    parse_int_ctrl_settings( &reg_data[ 0 ], &settings->int_settings );
 
     /* Parse advance settings and store in device structure */
-    parse_advance_settings(&reg_data[1], &settings->adv_settings);
+    parse_advance_settings( &reg_data[ 1 ], &settings->adv_settings );
 
     /* Parse power control settings and store in device structure */
-    parse_pwr_ctrl_settings(&reg_data[2], settings);
+    parse_pwr_ctrl_settings( &reg_data[ 2 ], settings );
 
     /* Parse ODR and filter settings and store in device structure */
-    parse_odr_filter_settings(&reg_data[3], &settings->odr_filter);
+    parse_odr_filter_settings( &reg_data[ 3 ], &settings->odr_filter );
 }
 
 /*!
  * @brief This internal API parse the interrupt control(output mode, level,
  * latch and data ready) settings and store in the device structure.
  */
-static void parse_int_ctrl_settings(const uint8_t *reg_data, struct bmp3_int_ctrl_settings *settings)
+static void parse_int_ctrl_settings( const uint8_t *reg_data, struct bmp3_int_ctrl_settings *settings )
 {
-    settings->output_mode = BMP3_GET_BITS_POS_0(*reg_data, BMP3_INT_OUTPUT_MODE);
-    settings->level = BMP3_GET_BITS(*reg_data, BMP3_INT_LEVEL);
-    settings->latch = BMP3_GET_BITS(*reg_data, BMP3_INT_LATCH);
-    settings->drdy_en = BMP3_GET_BITS(*reg_data, BMP3_INT_DRDY_EN);
+    settings->output_mode = BMP3_GET_BITS_POS_0( *reg_data, BMP3_INT_OUTPUT_MODE );
+    settings->level = BMP3_GET_BITS( *reg_data, BMP3_INT_LEVEL );
+    settings->latch = BMP3_GET_BITS( *reg_data, BMP3_INT_LATCH );
+    settings->drdy_en = BMP3_GET_BITS( *reg_data, BMP3_INT_DRDY_EN );
 }
-static void parse_advance_settings(const uint8_t *reg_data, struct bmp3_adv_settings *settings)
+
+static void parse_advance_settings( const uint8_t *reg_data, struct bmp3_adv_settings *settings )
 {
-    settings->i2c_wdt_en = BMP3_GET_BITS(*reg_data, BMP3_I2C_WDT_EN);
-    settings->i2c_wdt_sel = BMP3_GET_BITS(*reg_data, BMP3_I2C_WDT_SEL);
+    settings->i2c_wdt_en = BMP3_GET_BITS( *reg_data, BMP3_I2C_WDT_EN );
+    settings->i2c_wdt_sel = BMP3_GET_BITS( *reg_data, BMP3_I2C_WDT_SEL );
 }
 
 /*!
  * @brief This internal API parse the power control(power mode, pressure enable
  * and temperature enable) settings and store in the device structure.
  */
-static void  parse_pwr_ctrl_settings(const uint8_t *reg_data, struct bmp3_settings *settings)
+static void parse_pwr_ctrl_settings( const uint8_t *reg_data, struct bmp3_settings *settings )
 {
-    settings->op_mode = BMP3_GET_BITS(*reg_data, BMP3_OP_MODE);
-    settings->press_en = BMP3_GET_BITS_POS_0(*reg_data, BMP3_PRESS_EN);
-    settings->temp_en = BMP3_GET_BITS(*reg_data, BMP3_TEMP_EN);
+    settings->op_mode = BMP3_GET_BITS( *reg_data, BMP3_OP_MODE );
+    settings->press_en = BMP3_GET_BITS_POS_0( *reg_data, BMP3_PRESS_EN );
+    settings->temp_en = BMP3_GET_BITS( *reg_data, BMP3_TEMP_EN );
 }
 
 /*!
  * @brief This internal API parse the over sampling, ODR and filter
  * settings and store in the device structure.
  */
-static void  parse_odr_filter_settings(const uint8_t *reg_data, struct bmp3_odr_filter_settings *settings)
+static void parse_odr_filter_settings( const uint8_t *reg_data, struct bmp3_odr_filter_settings *settings )
 {
     uint8_t index = 0;
 
     /* ODR and filter settings index starts from one (0x1C register) */
-    settings->press_os = BMP3_GET_BITS_POS_0(reg_data[index], BMP3_PRESS_OS);
-    settings->temp_os = BMP3_GET_BITS(reg_data[index], BMP3_TEMP_OS);
+    settings->press_os = BMP3_GET_BITS_POS_0( reg_data[ index ], BMP3_PRESS_OS );
+    settings->temp_os = BMP3_GET_BITS( reg_data[ index ], BMP3_TEMP_OS );
 
     /* Move index to 0x1D register */
     index++;
-    settings->odr = BMP3_GET_BITS_POS_0(reg_data[index], BMP3_ODR);
+    settings->odr = BMP3_GET_BITS_POS_0( reg_data[ index ], BMP3_ODR );
 
     /* Move index to 0x1F register */
     index = index + 2;
-    settings->iir_filter = BMP3_GET_BITS(reg_data[index], BMP3_IIR_FILTER);
+    settings->iir_filter = BMP3_GET_BITS( reg_data[ index ], BMP3_IIR_FILTER );
 }
 
 /*!
  * @brief This API sets the pressure enable and temperature enable
  * settings of the sensor.
  */
-static int8_t set_pwr_ctrl_settings(uint32_t desired_settings,
-                                    const struct bmp3_settings *settings,
-                                    struct bmp3_dev *dev)
+static int8_t set_pwr_ctrl_settings(
+    uint32_t desired_settings, const struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_PWR_CTRL;
     uint8_t reg_data;
 
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        if (desired_settings & BMP3_SEL_PRESS_EN)
+        if ( desired_settings & BMP3_SEL_PRESS_EN )
         {
             /* Set the pressure enable settings in the
              * register variable */
-            reg_data = BMP3_SET_BITS_POS_0(reg_data, BMP3_PRESS_EN, settings->press_en);
+            reg_data = BMP3_SET_BITS_POS_0( reg_data, BMP3_PRESS_EN, settings->press_en );
         }
 
-        if (desired_settings & BMP3_SEL_TEMP_EN)
+        if ( desired_settings & BMP3_SEL_TEMP_EN )
         {
             /* Set the temperature enable settings in the
              * register variable */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_TEMP_EN, settings->temp_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_TEMP_EN, settings->temp_en );
         }
 
         /* Write the power control settings in the register */
-        rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &reg_data, 1, dev );
     }
 
     return rslt;
@@ -1925,7 +1909,7 @@ static int8_t set_pwr_ctrl_settings(uint32_t desired_settings,
  * @brief This internal API sets the over sampling, ODR and filter settings
  * of the sensor based on the settings selected by the user.
  */
-static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev)
+static int8_t set_odr_filter_settings( uint32_t desired_settings, struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
 
@@ -1936,43 +1920,43 @@ static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_set
     uint8_t reg_data[4];
     uint8_t len = 0;
 
-    rslt = bmp3_get_regs(BMP3_REG_OSR, reg_data, 4, dev);
+    rslt = bmp3_get_regs( BMP3_REG_OSR, reg_data, 4, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        if (are_settings_changed((BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS), desired_settings))
+        if ( are_settings_changed(( BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS ), desired_settings ))
         {
             /* Fill the over sampling register address and
             * register data to be written in the sensor */
-            fill_osr_data(desired_settings, reg_addr, reg_data, &len, settings);
+            fill_osr_data( desired_settings, reg_addr, reg_data, &len, settings );
         }
 
-        if (are_settings_changed(BMP3_SEL_ODR, desired_settings))
+        if ( are_settings_changed( BMP3_SEL_ODR, desired_settings ))
         {
             /* Fill the output data rate register address and
              * register data to be written in the sensor */
-            fill_odr_data(reg_addr, reg_data, &len, settings);
+            fill_odr_data( reg_addr, reg_data, &len, settings );
         }
 
-        if (are_settings_changed(BMP3_SEL_IIR_FILTER, desired_settings))
+        if ( are_settings_changed( BMP3_SEL_IIR_FILTER, desired_settings ))
         {
             /* Fill the iir filter register address and
              * register data to be written in the sensor */
-            fill_filter_data(reg_addr, reg_data, &len, settings);
+            fill_filter_data( reg_addr, reg_data, &len, settings );
         }
 
-        if (settings->op_mode == BMP3_MODE_NORMAL)
+        if ( settings->op_mode == BMP3_MODE_NORMAL )
         {
             /* For normal mode, OSR and ODR settings should
              * be proper */
-            rslt = validate_osr_and_odr_settings(settings);
+            rslt = validate_osr_and_odr_settings( settings );
         }
 
-        if (rslt == BMP3_OK)
+        if ( rslt == BMP3_OK )
         {
             /* Burst write the over sampling, ODR and filter
              * settings in the register */
-            rslt = bmp3_set_regs(reg_addr, reg_data, len, dev);
+            rslt = bmp3_set_regs( reg_addr, reg_data, len, dev );
         }
     }
 
@@ -1984,9 +1968,8 @@ static int8_t set_odr_filter_settings(uint32_t desired_settings, struct bmp3_set
  * latch and data ready) settings of the sensor based on the settings
  * selected by the user.
  */
-static int8_t set_int_ctrl_settings(uint32_t desired_settings,
-                                    const struct bmp3_settings *settings,
-                                    struct bmp3_dev *dev)
+static int8_t set_int_ctrl_settings(
+    uint32_t desired_settings, const struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data;
@@ -1994,37 +1977,41 @@ static int8_t set_int_ctrl_settings(uint32_t desired_settings,
     struct bmp3_int_ctrl_settings int_settings;
 
     reg_addr = BMP3_REG_INT_CTRL;
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
         int_settings = settings->int_settings;
 
-        if (desired_settings & BMP3_SEL_OUTPUT_MODE)
+        if ( desired_settings & BMP3_SEL_OUTPUT_MODE )
         {
             /* Set the interrupt output mode bits */
-            reg_data = BMP3_SET_BITS_POS_0(reg_data, BMP3_INT_OUTPUT_MODE, int_settings.output_mode);
+            reg_data = BMP3_SET_BITS_POS_0( reg_data, BMP3_INT_OUTPUT_MODE, int_settings.output_mode );
         }
 
-        if (desired_settings & BMP3_SEL_LEVEL)
+        if ( desired_settings & BMP3_SEL_LEVEL )
         {
             /* Set the interrupt level bits */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_INT_LEVEL, int_settings.level);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_INT_LEVEL, int_settings.level );
         }
 
-        if (desired_settings & BMP3_SEL_LATCH)
+        if ( desired_settings & BMP3_SEL_LATCH )
         {
             /* Set the interrupt latch bits */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_INT_LATCH, int_settings.latch);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_INT_LATCH, int_settings.latch );
         }
 
-        if (desired_settings & BMP3_SEL_DRDY_EN)
+        if ( desired_settings & BMP3_SEL_DRDY_EN )
         {
             /* Set the interrupt data ready bits */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_INT_DRDY_EN, int_settings.drdy_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_INT_DRDY_EN, int_settings.drdy_en );
         }
 
-        rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &reg_data, 1, dev );
+    }
+    else
+    {
+        log_error( "Could not read registers" );
     }
 
     return rslt;
@@ -2034,8 +2021,8 @@ static int8_t set_int_ctrl_settings(uint32_t desired_settings,
  * @brief This internal API sets the advance (i2c_wdt_en, i2c_wdt_sel)
  * settings of the sensor based on the settings selected by the user.
  */
-static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_settings *settings,
-                                   struct bmp3_dev *dev)
+static int8_t set_advance_settings(
+    uint32_t desired_settings, const struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr;
@@ -2043,23 +2030,23 @@ static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_
     struct bmp3_adv_settings adv_settings = settings->adv_settings;
 
     reg_addr = BMP3_REG_IF_CONF;
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        if (desired_settings & BMP3_SEL_I2C_WDT_EN)
+        if ( desired_settings & BMP3_SEL_I2C_WDT_EN )
         {
             /* Set the i2c watch dog enable bits */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_I2C_WDT_EN, adv_settings.i2c_wdt_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_I2C_WDT_EN, adv_settings.i2c_wdt_en );
         }
 
-        if (desired_settings & BMP3_SEL_I2C_WDT)
+        if ( desired_settings & BMP3_SEL_I2C_WDT )
         {
             /* Set the i2c watch dog select bits */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_I2C_WDT_SEL, adv_settings.i2c_wdt_sel);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_I2C_WDT_SEL, adv_settings.i2c_wdt_sel );
         }
 
-        rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &reg_data, 1, dev );
     }
 
     return rslt;
@@ -2069,16 +2056,16 @@ static int8_t set_advance_settings(uint32_t desired_settings, const struct bmp3_
  * @brief This internal API gets the over sampling, ODR and filter settings
  * of the sensor.
  */
-static int8_t get_odr_filter_settings(struct bmp3_settings *settings, struct bmp3_dev *dev)
+static int8_t get_odr_filter_settings( struct bmp3_settings *settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data[4];
 
     /* Read data beginning from 0x1C register */
-    rslt = bmp3_get_regs(BMP3_REG_OSR, reg_data, 4, dev);
+    rslt = bmp3_get_regs( BMP3_REG_OSR, reg_data, 4, dev );
 
     /* Parse the read data and store it in dev structure */
-    parse_odr_filter_settings(reg_data, &settings->odr_filter);
+    parse_odr_filter_settings( reg_data, &settings->odr_filter );
 
     return rslt;
 }
@@ -2087,7 +2074,7 @@ static int8_t get_odr_filter_settings(struct bmp3_settings *settings, struct bmp
  * @brief This internal API validate the over sampling, ODR settings of the
  * sensor.
  */
-static int8_t validate_osr_and_odr_settings(const struct bmp3_settings *settings)
+static int8_t validate_osr_and_odr_settings( const struct bmp3_settings *settings )
 {
     int8_t rslt;
 
@@ -2099,26 +2086,42 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_settings *settings
 
     /* Sampling period corresponding to ODR in microseconds  */
     uint32_t odr[18] = {
-        5000, 10000, 20000, 40000, 80000, 160000, 320000, 640000, 1280000, 2560000, 5120000, 10240000, 20480000,
-        40960000, 81920000, 163840000, 327680000, 655360000
+        5000,
+        10000,
+        20000,
+        40000,
+        80000,
+        160000,
+        320000,
+        640000,
+        1280000,
+        2560000,
+        5120000,
+        10240000,
+        20480000,
+        40960000,
+        81920000,
+        163840000,
+        327680000,
+        655360000
     };
 
-    if (settings->press_en)
+    if ( settings->press_en )
     {
         /* Calculate the pressure measurement duration */
-        meas_t_p += calculate_press_meas_time(settings);
+        meas_t_p += calculate_press_meas_time( settings );
     }
 
-    if (settings->temp_en)
+    if ( settings->temp_en )
     {
         /* Calculate the temperature measurement duration */
-        meas_t_p += calculate_temp_meas_time(settings);
+        meas_t_p += calculate_temp_meas_time( settings );
     }
 
     /* Constant 234us added to the summation of temperature and pressure measurement duration */
     meas_t += meas_t_p;
 
-    rslt = verify_meas_time_and_odr_duration(meas_t, odr[settings->odr_filter.odr]);
+    rslt = verify_meas_time_and_odr_duration( meas_t, odr[ settings->odr_filter.odr ] );
 
     return rslt;
 }
@@ -2127,11 +2130,11 @@ static int8_t validate_osr_and_odr_settings(const struct bmp3_settings *settings
  * @brief This internal API checks whether the measurement time and ODR duration
  * of the sensor are proper.
  */
-static int8_t verify_meas_time_and_odr_duration(uint32_t meas_t, uint32_t odr_duration)
+static int8_t verify_meas_time_and_odr_duration( uint32_t meas_t, uint32_t odr_duration )
 {
     int8_t rslt;
 
-    if (meas_t < odr_duration)
+    if ( meas_t < odr_duration )
     {
         /* If measurement duration is less than ODR duration
          * then OSR and ODR settings are fine */
@@ -2150,7 +2153,7 @@ static int8_t verify_meas_time_and_odr_duration(uint32_t meas_t, uint32_t odr_du
  * @brief This internal API calculates the pressure measurement duration of the
  * sensor.
  */
-static uint32_t calculate_press_meas_time(const struct bmp3_settings *settings)
+static uint32_t calculate_press_meas_time( const struct bmp3_settings *settings )
 {
     uint32_t press_meas_t;
     struct bmp3_odr_filter_settings odr_filter = settings->odr_filter;
@@ -2162,8 +2165,8 @@ static uint32_t calculate_press_meas_time(const struct bmp3_settings *settings)
     uint8_t base = 2;
     uint32_t partial_out;
 #endif /* BMP3_FLOAT_COMPENSATION */
-    partial_out = pow_bmp3(base, odr_filter.press_os);
-    press_meas_t = (uint32_t)(BMP3_SETTLE_TIME_PRESS + partial_out * BMP3_ADC_CONV_TIME);
+    partial_out = pow_bmp3( base, odr_filter.press_os );
+    press_meas_t = ( uint32_t ) ( BMP3_SETTLE_TIME_PRESS + partial_out * BMP3_ADC_CONV_TIME );
 
     /* Output in microseconds */
     return press_meas_t;
@@ -2173,7 +2176,7 @@ static uint32_t calculate_press_meas_time(const struct bmp3_settings *settings)
  * @brief This internal API calculates the temperature measurement duration of
  * the sensor.
  */
-static uint32_t calculate_temp_meas_time(const struct bmp3_settings *settings)
+static uint32_t calculate_temp_meas_time( const struct bmp3_settings *settings )
 {
     uint32_t temp_meas_t;
     struct bmp3_odr_filter_settings odr_filter = settings->odr_filter;
@@ -2185,8 +2188,8 @@ static uint32_t calculate_temp_meas_time(const struct bmp3_settings *settings)
     uint8_t base = 2;
     uint32_t partial_out;
 #endif /* BMP3_FLOAT_COMPENSATION */
-    partial_out = pow_bmp3(base, odr_filter.temp_os);
-    temp_meas_t = (uint32_t)(BMP3_SETTLE_TIME_TEMP + partial_out * BMP3_ADC_CONV_TIME);
+    partial_out = pow_bmp3( base, odr_filter.temp_os );
+    temp_meas_t = ( uint32_t ) ( BMP3_SETTLE_TIME_TEMP + partial_out * BMP3_ADC_CONV_TIME );
 
     /* Output in uint32_t */
     return temp_meas_t;
@@ -2196,35 +2199,32 @@ static uint32_t calculate_temp_meas_time(const struct bmp3_settings *settings)
  * @brief This internal API fills the register address and register data of
  * the over sampling settings for burst write operation.
  */
-static void fill_osr_data(uint32_t desired_settings,
-                          uint8_t *addr,
-                          uint8_t *reg_data,
-                          uint8_t *len,
-                          const struct bmp3_settings *settings)
+static void fill_osr_data(
+    uint32_t desired_settings, uint8_t *addr, uint8_t *reg_data, uint8_t *len, const struct bmp3_settings *settings )
 {
     struct bmp3_odr_filter_settings osr_settings = settings->odr_filter;
 
-    if (desired_settings & (BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS))
+    if ( desired_settings & ( BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS ))
     {
         /* Pressure over sampling settings check */
-        if (desired_settings & BMP3_SEL_PRESS_OS)
+        if ( desired_settings & BMP3_SEL_PRESS_OS )
         {
             /* Set the pressure over sampling settings in the
              * register variable */
-            reg_data[*len] = BMP3_SET_BITS_POS_0(reg_data[0], BMP3_PRESS_OS, osr_settings.press_os);
+            reg_data[ *len ] = BMP3_SET_BITS_POS_0( reg_data[ 0 ], BMP3_PRESS_OS, osr_settings.press_os );
         }
 
         /* Temperature over sampling settings check */
-        if (desired_settings & BMP3_SEL_TEMP_OS)
+        if ( desired_settings & BMP3_SEL_TEMP_OS )
         {
             /* Set the temperature over sampling settings in the
              * register variable */
-            reg_data[*len] = BMP3_SET_BITS(reg_data[0], BMP3_TEMP_OS, osr_settings.temp_os);
+            reg_data[ *len ] = BMP3_SET_BITS( reg_data[ 0 ], BMP3_TEMP_OS, osr_settings.temp_os );
         }
 
         /* 0x1C is the register address of over sampling register */
-        addr[*len] = BMP3_REG_OSR;
-        (*len)++;
+        addr[ *len ] = BMP3_REG_OSR;
+        ( *len )++;
     }
 }
 
@@ -2232,45 +2232,45 @@ static void fill_osr_data(uint32_t desired_settings,
  * @brief This internal API fills the register address and register data of
  * the ODR settings for burst write operation.
  */
-static void fill_odr_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len, struct bmp3_settings *settings)
+static void fill_odr_data( uint8_t *addr, uint8_t *reg_data, uint8_t *len, struct bmp3_settings *settings )
 {
     struct bmp3_odr_filter_settings *osr_settings = &settings->odr_filter;
 
     /* Limit the ODR to 0.001525879 Hz*/
-    if (osr_settings->odr > BMP3_ODR_0_001_HZ)
+    if ( osr_settings->odr > BMP3_ODR_0_001_HZ )
     {
         osr_settings->odr = BMP3_ODR_0_001_HZ;
     }
 
     /* Set the ODR settings in the register variable */
-    reg_data[*len] = BMP3_SET_BITS_POS_0(reg_data[1], BMP3_ODR, osr_settings->odr);
+    reg_data[ *len ] = BMP3_SET_BITS_POS_0( reg_data[ 1 ], BMP3_ODR, osr_settings->odr );
 
     /* 0x1D is the register address of output data rate register */
-    addr[*len] = BMP3_REG_ODR;
-    (*len)++;
+    addr[ *len ] = BMP3_REG_ODR;
+    ( *len )++;
 }
 
 /*!
  * @brief This internal API fills the register address and register data of
  * the filter settings for burst write operation.
  */
-static void fill_filter_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len, const struct bmp3_settings *settings)
+static void fill_filter_data( uint8_t *addr, uint8_t *reg_data, uint8_t *len, const struct bmp3_settings *settings )
 {
     struct bmp3_odr_filter_settings osr_settings = settings->odr_filter;
 
     /* Set the iir settings in the register variable */
-    reg_data[*len] = BMP3_SET_BITS(reg_data[3], BMP3_IIR_FILTER, osr_settings.iir_filter);
+    reg_data[ *len ] = BMP3_SET_BITS( reg_data[ 3 ], BMP3_IIR_FILTER, osr_settings.iir_filter );
 
     /* 0x1F is the register address of iir filter register */
-    addr[*len] = BMP3_REG_CONFIG;
-    (*len)++;
+    addr[ *len ] = BMP3_REG_CONFIG;
+    ( *len )++;
 }
 
 /*!
  *  @brief This internal API is used to parse the pressure or temperature or
  *  both the data and store it in the bmp3_uncomp_data structure instance.
  */
-static void parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *uncomp_data)
+static void parse_sensor_data( const uint8_t *reg_data, struct bmp3_uncomp_data *uncomp_data )
 {
     /* Temporary variables to store the sensor data */
     uint32_t data_xlsb;
@@ -2278,15 +2278,15 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *
     uint32_t data_msb;
 
     /* Store the parsed register values for pressure data */
-    data_xlsb = (uint32_t)reg_data[0];
-    data_lsb = (uint32_t)reg_data[1] << 8;
-    data_msb = (uint32_t)reg_data[2] << 16;
+    data_xlsb = ( uint32_t ) reg_data[ 0 ];
+    data_lsb = ( uint32_t ) reg_data[ 1 ] << 8;
+    data_msb = ( uint32_t ) reg_data[ 2 ] << 16;
     uncomp_data->pressure = data_msb | data_lsb | data_xlsb;
 
     /* Store the parsed register values for temperature data */
-    data_xlsb = (uint32_t)reg_data[3];
-    data_lsb = (uint32_t)reg_data[4] << 8;
-    data_msb = (uint32_t)reg_data[5] << 16;
+    data_xlsb = ( uint32_t ) reg_data[ 3 ];
+    data_lsb = ( uint32_t ) reg_data[ 4 ] << 8;
+    data_msb = ( uint32_t ) reg_data[ 5 ] << 16;
     uncomp_data->temperature = data_msb | data_lsb | data_xlsb;
 }
 
@@ -2294,17 +2294,16 @@ static void parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *
  * @brief This internal API is used to compensate the pressure or temperature
  * or both the data according to the component selected by the user.
  */
-static int8_t compensate_data(uint8_t sensor_comp,
-                              const struct bmp3_uncomp_data *uncomp_data,
-                              struct bmp3_data *comp_data,
-                              struct bmp3_calib_data *calib_data)
+static int8_t compensate_data(
+    uint8_t sensor_comp, const struct bmp3_uncomp_data *uncomp_data, struct bmp3_data *comp_data,
+    struct bmp3_calib_data *calib_data )
 {
     int8_t rslt = BMP3_OK;
 
-    if ((uncomp_data != NULL) && (comp_data != NULL) && (calib_data != NULL))
+    if (( uncomp_data != NULL) && ( comp_data != NULL) && ( calib_data != NULL))
     {
         /* If pressure and temperature component is selected */
-        if (sensor_comp == BMP3_PRESS_TEMP)
+        if ( sensor_comp == BMP3_PRESS_TEMP )
         {
             /*
              * NOTE : Temperature compensation must be done first.
@@ -2314,14 +2313,14 @@ static int8_t compensate_data(uint8_t sensor_comp,
              */
 
             /* Compensate pressure and temperature data */
-            rslt = compensate_temperature(&comp_data->temperature, uncomp_data, calib_data);
+            rslt = compensate_temperature( &comp_data->temperature, uncomp_data, calib_data );
 
-            if (rslt == BMP3_OK)
+            if ( rslt == BMP3_OK )
             {
-                rslt = compensate_pressure(&comp_data->pressure, uncomp_data, calib_data);
+                rslt = compensate_pressure( &comp_data->pressure, uncomp_data, calib_data );
             }
         }
-        else if (sensor_comp == BMP3_PRESS)
+        else if ( sensor_comp == BMP3_PRESS )
         {
             /*
              * NOTE : Temperature compensation must be done first.
@@ -2331,16 +2330,16 @@ static int8_t compensate_data(uint8_t sensor_comp,
              * As only pressure is enabled in 'sensor_comp', after calculating
              * compensated temperature, assign it to zero.
              */
-            (void)compensate_temperature(&comp_data->temperature, uncomp_data, calib_data);
+            ( void ) compensate_temperature( &comp_data->temperature, uncomp_data, calib_data );
             comp_data->temperature = 0;
 
             /* Compensate the pressure data */
-            rslt = compensate_pressure(&comp_data->pressure, uncomp_data, calib_data);
+            rslt = compensate_pressure( &comp_data->pressure, uncomp_data, calib_data );
         }
-        else if (sensor_comp == BMP3_TEMP)
+        else if ( sensor_comp == BMP3_TEMP )
         {
             /* Compensate the temperature data */
-            rslt = compensate_temperature(&comp_data->temperature, uncomp_data, calib_data);
+            rslt = compensate_temperature( &comp_data->temperature, uncomp_data, calib_data );
 
             /*
              * As only temperature is enabled in 'sensor_comp'
@@ -2542,25 +2541,25 @@ static float pow_bmp3(double base, uint8_t power)
  *  @brief This internal API is used to parse the calibration data, compensates
  *  it and store it in device structure
  */
-static void parse_calib_data(const uint8_t *reg_data, struct bmp3_dev *dev)
+static void parse_calib_data( const uint8_t *reg_data, struct bmp3_dev *dev )
 {
     /* Temporary variable to store the aligned trim data */
     struct bmp3_reg_calib_data *reg_calib_data = &dev->calib_data.reg_calib_data;
 
-    reg_calib_data->par_t1 = BMP3_CONCAT_BYTES(reg_data[1], reg_data[0]);
-    reg_calib_data->par_t2 = BMP3_CONCAT_BYTES(reg_data[3], reg_data[2]);
-    reg_calib_data->par_t3 = (int8_t)reg_data[4];
-    reg_calib_data->par_p1 = (int16_t)BMP3_CONCAT_BYTES(reg_data[6], reg_data[5]);
-    reg_calib_data->par_p2 = (int16_t)BMP3_CONCAT_BYTES(reg_data[8], reg_data[7]);
-    reg_calib_data->par_p3 = (int8_t)reg_data[9];
-    reg_calib_data->par_p4 = (int8_t)reg_data[10];
-    reg_calib_data->par_p5 = BMP3_CONCAT_BYTES(reg_data[12], reg_data[11]);
-    reg_calib_data->par_p6 = BMP3_CONCAT_BYTES(reg_data[14], reg_data[13]);
-    reg_calib_data->par_p7 = (int8_t)reg_data[15];
-    reg_calib_data->par_p8 = (int8_t)reg_data[16];
-    reg_calib_data->par_p9 = (int16_t)BMP3_CONCAT_BYTES(reg_data[18], reg_data[17]);
-    reg_calib_data->par_p10 = (int8_t)reg_data[19];
-    reg_calib_data->par_p11 = (int8_t)reg_data[20];
+    reg_calib_data->par_t1 = BMP3_CONCAT_BYTES( reg_data[ 1 ], reg_data[ 0 ] );
+    reg_calib_data->par_t2 = BMP3_CONCAT_BYTES( reg_data[ 3 ], reg_data[ 2 ] );
+    reg_calib_data->par_t3 = ( int8_t ) reg_data[ 4 ];
+    reg_calib_data->par_p1 = ( int16_t ) BMP3_CONCAT_BYTES( reg_data[ 6 ], reg_data[ 5 ] );
+    reg_calib_data->par_p2 = ( int16_t ) BMP3_CONCAT_BYTES( reg_data[ 8 ], reg_data[ 7 ] );
+    reg_calib_data->par_p3 = ( int8_t ) reg_data[ 9 ];
+    reg_calib_data->par_p4 = ( int8_t ) reg_data[ 10 ];
+    reg_calib_data->par_p5 = BMP3_CONCAT_BYTES( reg_data[ 12 ], reg_data[ 11 ] );
+    reg_calib_data->par_p6 = BMP3_CONCAT_BYTES( reg_data[ 14 ], reg_data[ 13 ] );
+    reg_calib_data->par_p7 = ( int8_t ) reg_data[ 15 ];
+    reg_calib_data->par_p8 = ( int8_t ) reg_data[ 16 ];
+    reg_calib_data->par_p9 = ( int16_t ) BMP3_CONCAT_BYTES( reg_data[ 18 ], reg_data[ 17 ] );
+    reg_calib_data->par_p10 = ( int8_t ) reg_data[ 19 ];
+    reg_calib_data->par_p11 = ( int8_t ) reg_data[ 20 ];
 }
 
 /*!
@@ -2569,9 +2568,8 @@ static void parse_calib_data(const uint8_t *reg_data, struct bmp3_dev *dev)
  * Returns temperature in integer. Actual temperature is obtained by dividing by 100
  * For eg : If returned temperature is 2426 then it is 2426/100 = 24 deg Celsius
  */
-static int8_t compensate_temperature(int64_t *temperature,
-                                     const struct bmp3_uncomp_data *uncomp_data,
-                                     struct bmp3_calib_data *calib_data)
+static int8_t compensate_temperature(
+    int64_t *temperature, const struct bmp3_uncomp_data *uncomp_data, struct bmp3_calib_data *calib_data )
 {
     int8_t rslt = BMP3_OK;
     int64_t partial_data1;
@@ -2582,30 +2580,30 @@ static int8_t compensate_temperature(int64_t *temperature,
     int64_t partial_data6;
     int64_t comp_temp;
 
-    partial_data1 = (int64_t)(uncomp_data->temperature - ((int64_t)256 * calib_data->reg_calib_data.par_t1));
-    partial_data2 = (int64_t)(calib_data->reg_calib_data.par_t2 * partial_data1);
-    partial_data3 = (int64_t)(partial_data1 * partial_data1);
-    partial_data4 = (int64_t)partial_data3 * calib_data->reg_calib_data.par_t3;
-    partial_data5 = (int64_t)((int64_t)(partial_data2 * 262144) + partial_data4);
-    partial_data6 = (int64_t)(partial_data5 / 4294967296);
+    partial_data1 = ( int64_t ) ( uncomp_data->temperature - (( int64_t ) 256 * calib_data->reg_calib_data.par_t1 ));
+    partial_data2 = ( int64_t ) ( calib_data->reg_calib_data.par_t2 * partial_data1 );
+    partial_data3 = ( int64_t ) ( partial_data1 * partial_data1 );
+    partial_data4 = ( int64_t ) partial_data3 * calib_data->reg_calib_data.par_t3;
+    partial_data5 = ( int64_t ) (( int64_t ) ( partial_data2 * 262144 ) + partial_data4 );
+    partial_data6 = ( int64_t ) ( partial_data5 / 4294967296 );
 
     /* Store t_lin in dev. structure for pressure calculation */
-    calib_data->reg_calib_data.t_lin = (int64_t)partial_data6;
-    comp_temp = (int64_t)((partial_data6 * 25) / 16384);
+    calib_data->reg_calib_data.t_lin = ( int64_t ) partial_data6;
+    comp_temp = ( int64_t ) (( partial_data6 * 25 ) / 16384 );
 
-    if (comp_temp < BMP3_MIN_TEMP_INT)
+    if ( comp_temp < BMP3_MIN_TEMP_INT )
     {
         comp_temp = BMP3_MIN_TEMP_INT;
         rslt = BMP3_W_MIN_TEMP;
     }
 
-    if (comp_temp > BMP3_MAX_TEMP_INT)
+    if ( comp_temp > BMP3_MAX_TEMP_INT )
     {
         comp_temp = BMP3_MAX_TEMP_INT;
         rslt = BMP3_W_MAX_TEMP;
     }
 
-    (*temperature) = comp_temp;
+    ( *temperature ) = comp_temp;
 
     return rslt;
 }
@@ -2615,9 +2613,8 @@ static int8_t compensate_temperature(int64_t *temperature,
  * return the compensated pressure data in integer data type.
  * for eg return if pressure is 9528709 which is 9528709/100 = 95287.09 Pascal
  */
-static int8_t compensate_pressure(uint64_t *pressure,
-                                  const struct bmp3_uncomp_data *uncomp_data,
-                                  const struct bmp3_calib_data *calib_data)
+static int8_t compensate_pressure(
+    uint64_t *pressure, const struct bmp3_uncomp_data *uncomp_data, const struct bmp3_calib_data *calib_data )
 {
     int8_t rslt = BMP3_OK;
     const struct bmp3_reg_calib_data *reg_calib_data = &calib_data->reg_calib_data;
@@ -2631,48 +2628,48 @@ static int8_t compensate_pressure(uint64_t *pressure,
     int64_t sensitivity;
     uint64_t comp_press;
 
-    partial_data1 = (int64_t)(reg_calib_data->t_lin * reg_calib_data->t_lin);
-    partial_data2 = (int64_t)(partial_data1 / 64);
-    partial_data3 = (int64_t)((partial_data2 * reg_calib_data->t_lin) / 256);
-    partial_data4 = (int64_t)((reg_calib_data->par_p8 * partial_data3) / 32);
-    partial_data5 = (int64_t)((reg_calib_data->par_p7 * partial_data1) * 16);
-    partial_data6 = (int64_t)((reg_calib_data->par_p6 * reg_calib_data->t_lin) * 4194304);
-    offset = (int64_t)((reg_calib_data->par_p5 * 140737488355328) + partial_data4 + partial_data5 + partial_data6);
-    partial_data2 = (int64_t)((reg_calib_data->par_p4 * partial_data3) / 32);
-    partial_data4 = (int64_t)((reg_calib_data->par_p3 * partial_data1) * 4);
-    partial_data5 = (int64_t)((reg_calib_data->par_p2 - (int32_t)16384) * reg_calib_data->t_lin * 2097152);
-    sensitivity =
-        (int64_t)(((reg_calib_data->par_p1 - (int32_t)16384) * 70368744177664) + partial_data2 + partial_data4 +
-                  partial_data5);
-    partial_data1 = (int64_t)((sensitivity / 16777216) * uncomp_data->pressure);
-    partial_data2 = (int64_t)(reg_calib_data->par_p10 * reg_calib_data->t_lin);
-    partial_data3 = (int64_t)(partial_data2 + ((int32_t)65536 * reg_calib_data->par_p9));
-    partial_data4 = (int64_t)((partial_data3 * uncomp_data->pressure) / (int32_t)8192);
+    partial_data1 = ( int64_t ) ( reg_calib_data->t_lin * reg_calib_data->t_lin );
+    partial_data2 = ( int64_t ) ( partial_data1 / 64 );
+    partial_data3 = ( int64_t ) (( partial_data2 * reg_calib_data->t_lin ) / 256 );
+    partial_data4 = ( int64_t ) (( reg_calib_data->par_p8 * partial_data3 ) / 32 );
+    partial_data5 = ( int64_t ) (( reg_calib_data->par_p7 * partial_data1 ) * 16 );
+    partial_data6 = ( int64_t ) (( reg_calib_data->par_p6 * reg_calib_data->t_lin ) * 4194304 );
+    offset = ( int64_t ) (( reg_calib_data->par_p5 * 140737488355328 ) + partial_data4 + partial_data5 +
+                          partial_data6 );
+    partial_data2 = ( int64_t ) (( reg_calib_data->par_p4 * partial_data3 ) / 32 );
+    partial_data4 = ( int64_t ) (( reg_calib_data->par_p3 * partial_data1 ) * 4 );
+    partial_data5 = ( int64_t ) (( reg_calib_data->par_p2 - ( int32_t ) 16384 ) * reg_calib_data->t_lin * 2097152 );
+    sensitivity = ( int64_t ) ((( reg_calib_data->par_p1 - ( int32_t ) 16384 ) * 70368744177664 ) + partial_data2 +
+                               partial_data4 + partial_data5 );
+    partial_data1 = ( int64_t ) (( sensitivity / 16777216 ) * uncomp_data->pressure );
+    partial_data2 = ( int64_t ) ( reg_calib_data->par_p10 * reg_calib_data->t_lin );
+    partial_data3 = ( int64_t ) ( partial_data2 + (( int32_t ) 65536 * reg_calib_data->par_p9 ));
+    partial_data4 = ( int64_t ) (( partial_data3 * uncomp_data->pressure ) / ( int32_t ) 8192 );
 
     /* dividing by 10 followed by multiplying by 10
      * To avoid overflow caused by (uncomp_data->pressure * partial_data4)
      */
-    partial_data5 = (int64_t)((uncomp_data->pressure * (partial_data4 / 10)) / (int32_t)512);
-    partial_data5 = (int64_t)(partial_data5 * 10);
-    partial_data6 = (int64_t)(uncomp_data->pressure * uncomp_data->pressure);
-    partial_data2 = (int64_t)((reg_calib_data->par_p11 * partial_data6) / (int32_t)65536);
-    partial_data3 = (int64_t)((int64_t)(partial_data2 * uncomp_data->pressure) / 128);
-    partial_data4 = (int64_t)((offset / 4) + partial_data1 + partial_data5 + partial_data3);
-    comp_press = (((uint64_t)partial_data4 * 25) / (uint64_t)1099511627776);
+    partial_data5 = ( int64_t ) (( uncomp_data->pressure * ( partial_data4 / 10 )) / ( int32_t ) 512 );
+    partial_data5 = ( int64_t ) ( partial_data5 * 10 );
+    partial_data6 = ( int64_t ) ( uncomp_data->pressure * uncomp_data->pressure );
+    partial_data2 = ( int64_t ) (( reg_calib_data->par_p11 * partial_data6 ) / ( int32_t ) 65536 );
+    partial_data3 = ( int64_t ) (( int64_t ) ( partial_data2 * uncomp_data->pressure ) / 128 );
+    partial_data4 = ( int64_t ) (( offset / 4 ) + partial_data1 + partial_data5 + partial_data3 );
+    comp_press = ((( uint64_t ) partial_data4 * 25 ) / ( uint64_t ) 1099511627776 );
 
-    if (comp_press < BMP3_MIN_PRES_INT)
+    if ( comp_press < BMP3_MIN_PRES_INT )
     {
         comp_press = BMP3_MIN_PRES_INT;
         rslt = BMP3_W_MIN_PRES;
     }
 
-    if (comp_press > BMP3_MAX_PRES_INT)
+    if ( comp_press > BMP3_MAX_PRES_INT )
     {
         comp_press = BMP3_MAX_PRES_INT;
         rslt = BMP3_W_MAX_PRES;
     }
 
-    (*pressure) = comp_press;
+    ( *pressure ) = comp_press;
 
     return rslt;
 }
@@ -2680,11 +2677,11 @@ static int8_t compensate_pressure(uint64_t *pressure,
 /*!
  * @brief This internal API is used to calculate the power functionality.
  */
-static uint32_t pow_bmp3(uint8_t base, uint8_t power)
+static uint32_t pow_bmp3( uint8_t base, uint8_t power )
 {
     uint32_t pow_output = 1;
 
-    while (power != 0)
+    while ( power != 0 )
     {
         pow_output = base * pow_output;
         power--;
@@ -2699,11 +2696,11 @@ static uint32_t pow_bmp3(uint8_t base, uint8_t power)
  * @brief This internal API is used to identify the settings which the user
  * wants to modify in the sensor.
  */
-static uint8_t are_settings_changed(uint32_t sub_settings, uint32_t desired_settings)
+static uint8_t are_settings_changed( uint32_t sub_settings, uint32_t desired_settings )
 {
     uint8_t settings_changed = FALSE;
 
-    if (sub_settings & desired_settings)
+    if ( sub_settings & desired_settings )
     {
         /* User wants to modify this particular settings */
         settings_changed = TRUE;
@@ -2721,12 +2718,12 @@ static uint8_t are_settings_changed(uint32_t sub_settings, uint32_t desired_sett
  * @brief This internal API is used to validate the device structure pointer for
  * null conditions.
  */
-static int8_t null_ptr_check(const struct bmp3_dev *dev)
+static int8_t null_ptr_check( const struct bmp3_dev *dev )
 {
     int8_t rslt;
 
-    if ((dev == NULL) || (dev->read == NULL) || (dev->write == NULL) || (dev->delay_us == NULL) ||
-        (dev->intf_ptr == NULL))
+    if (( dev == NULL) || ( dev->read == NULL) || ( dev->write == NULL) || ( dev->delay_us == NULL) ||
+        ( dev->intf_ptr == NULL))
     {
         /* Device structure pointer is not valid */
         rslt = BMP3_E_NULL_PTR;
@@ -2746,26 +2743,26 @@ static int8_t null_ptr_check(const struct bmp3_dev *dev)
  * fifo_config_2(fifo_subsampling, data_select) and int_ctrl(fwtm_en, ffull_en)
  * settings and store it in device structure
  */
-static void parse_fifo_settings(const uint8_t *reg_data, struct bmp3_fifo_settings *fifo_settings)
+static void parse_fifo_settings( const uint8_t *reg_data, struct bmp3_fifo_settings *fifo_settings )
 {
-    uint8_t fifo_config_1_data = reg_data[0];
-    uint8_t fifo_config_2_data = reg_data[1];
-    uint8_t fifo_int_ctrl_data = reg_data[2];
+    uint8_t fifo_config_1_data = reg_data[ 0 ];
+    uint8_t fifo_config_2_data = reg_data[ 1 ];
+    uint8_t fifo_int_ctrl_data = reg_data[ 2 ];
 
     /* Parse fifo config 1 register data */
-    fifo_settings->mode = BMP3_GET_BITS_POS_0(fifo_config_1_data, BMP3_FIFO_MODE);
-    fifo_settings->stop_on_full_en = BMP3_GET_BITS(fifo_config_1_data, BMP3_FIFO_STOP_ON_FULL);
-    fifo_settings->time_en = BMP3_GET_BITS(fifo_config_1_data, BMP3_FIFO_TIME_EN);
-    fifo_settings->press_en = BMP3_GET_BITS(fifo_config_1_data, BMP3_FIFO_PRESS_EN);
-    fifo_settings->temp_en = BMP3_GET_BITS(fifo_config_1_data, BMP3_FIFO_TEMP_EN);
+    fifo_settings->mode = BMP3_GET_BITS_POS_0( fifo_config_1_data, BMP3_FIFO_MODE );
+    fifo_settings->stop_on_full_en = BMP3_GET_BITS( fifo_config_1_data, BMP3_FIFO_STOP_ON_FULL );
+    fifo_settings->time_en = BMP3_GET_BITS( fifo_config_1_data, BMP3_FIFO_TIME_EN );
+    fifo_settings->press_en = BMP3_GET_BITS( fifo_config_1_data, BMP3_FIFO_PRESS_EN );
+    fifo_settings->temp_en = BMP3_GET_BITS( fifo_config_1_data, BMP3_FIFO_TEMP_EN );
 
     /* Parse fifo config 2 register data */
-    fifo_settings->down_sampling = BMP3_GET_BITS_POS_0(fifo_config_2_data, BMP3_FIFO_DOWN_SAMPLING);
-    fifo_settings->filter_en = BMP3_GET_BITS(fifo_config_2_data, BMP3_FIFO_FILTER_EN);
+    fifo_settings->down_sampling = BMP3_GET_BITS_POS_0( fifo_config_2_data, BMP3_FIFO_DOWN_SAMPLING );
+    fifo_settings->filter_en = BMP3_GET_BITS( fifo_config_2_data, BMP3_FIFO_FILTER_EN );
 
     /* Parse fifo related interrupt control data */
-    fifo_settings->ffull_en = BMP3_GET_BITS(fifo_int_ctrl_data, BMP3_FIFO_FULL_EN);
-    fifo_settings->fwtm_en = BMP3_GET_BITS(fifo_int_ctrl_data, BMP3_FIFO_FWTM_EN);
+    fifo_settings->ffull_en = BMP3_GET_BITS( fifo_int_ctrl_data, BMP3_FIFO_FULL_EN );
+    fifo_settings->fwtm_en = BMP3_GET_BITS( fifo_int_ctrl_data, BMP3_FIFO_FWTM_EN );
 }
 
 /*!
@@ -2773,47 +2770,46 @@ static void parse_fifo_settings(const uint8_t *reg_data, struct bmp3_fifo_settin
  * fifo_stop_on_full, fifo_time_en, fifo_press_en, fifo_temp_en) settings in the
  * reg_data variable so as to burst write in the sensor.
  */
-static int8_t fill_fifo_config_1(uint16_t desired_settings,
-                                 const struct bmp3_fifo_settings *fifo_settings,
-                                 struct bmp3_dev *dev)
+static int8_t fill_fifo_config_1(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_FIFO_CONFIG_1;
     uint8_t reg_data;
 
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        if (desired_settings & BMP3_SEL_FIFO_MODE)
+        if ( desired_settings & BMP3_SEL_FIFO_MODE )
         {
             /* Fill the FIFO mode register data */
-            reg_data = BMP3_SET_BITS_POS_0(reg_data, BMP3_FIFO_MODE, fifo_settings->mode);
+            reg_data = BMP3_SET_BITS_POS_0( reg_data, BMP3_FIFO_MODE, fifo_settings->mode );
         }
 
-        if (desired_settings & BMP3_SEL_FIFO_STOP_ON_FULL_EN)
+        if ( desired_settings & BMP3_SEL_FIFO_STOP_ON_FULL_EN )
         {
             /* Fill the stop on full data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_STOP_ON_FULL, fifo_settings->stop_on_full_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_STOP_ON_FULL, fifo_settings->stop_on_full_en );
         }
 
-        if (desired_settings & BMP3_SEL_FIFO_TIME_EN)
+        if ( desired_settings & BMP3_SEL_FIFO_TIME_EN )
         {
             /* Fill the time enable data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_TIME_EN, fifo_settings->time_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_TIME_EN, fifo_settings->time_en );
         }
 
-        if (desired_settings & (BMP3_SEL_FIFO_PRESS_EN | BMP3_SEL_FIFO_TEMP_EN))
+        if ( desired_settings & ( BMP3_SEL_FIFO_PRESS_EN | BMP3_SEL_FIFO_TEMP_EN ))
         {
             /* Fill the pressure enable data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_PRESS_EN, fifo_settings->press_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_PRESS_EN, fifo_settings->press_en );
 
             /* Fill the temperature enable data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_TEMP_EN, fifo_settings->temp_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_TEMP_EN, fifo_settings->temp_en );
         }
 
         /* Write the power control settings in the register */
-        rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &reg_data, 1, dev );
     }
 
     return rslt;
@@ -2824,33 +2820,32 @@ static int8_t fill_fifo_config_1(uint16_t desired_settings,
  * data_select) settings in the reg_data variable so as to burst write
  * in the sensor.
  */
-static int8_t fill_fifo_config_2(uint16_t desired_settings,
-                                 const struct bmp3_fifo_settings *fifo_settings,
-                                 struct bmp3_dev *dev)
+static int8_t fill_fifo_config_2(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_FIFO_CONFIG_2;
     uint8_t reg_data;
 
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        if (desired_settings & BMP3_SEL_FIFO_DOWN_SAMPLING)
+        if ( desired_settings & BMP3_SEL_FIFO_DOWN_SAMPLING )
         {
             /* To do check Normal mode */
             /* Fill the down-sampling data */
-            reg_data = BMP3_SET_BITS_POS_0(reg_data, BMP3_FIFO_DOWN_SAMPLING, fifo_settings->down_sampling);
+            reg_data = BMP3_SET_BITS_POS_0( reg_data, BMP3_FIFO_DOWN_SAMPLING, fifo_settings->down_sampling );
         }
 
-        if (desired_settings & BMP3_SEL_FIFO_FILTER_EN)
+        if ( desired_settings & BMP3_SEL_FIFO_FILTER_EN )
         {
             /* Fill the filter enable data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_FILTER_EN, fifo_settings->filter_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_FILTER_EN, fifo_settings->filter_en );
         }
 
         /* Write the power control settings in the register */
-        rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &reg_data, 1, dev );
     }
 
     return rslt;
@@ -2860,32 +2855,31 @@ static int8_t fill_fifo_config_2(uint16_t desired_settings,
  * @brief This internal API fills the fifo interrupt control(fwtm_en, ffull_en)
  * settings in the reg_data variable so as to burst write in the sensor.
  */
-static int8_t fill_fifo_int_ctrl(uint16_t desired_settings,
-                                 const struct bmp3_fifo_settings *fifo_settings,
-                                 struct bmp3_dev *dev)
+static int8_t fill_fifo_int_ctrl(
+    uint16_t desired_settings, const struct bmp3_fifo_settings *fifo_settings, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_INT_CTRL;
     uint8_t reg_data;
 
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        if (desired_settings & BMP3_SEL_FIFO_FWTM_EN)
+        if ( desired_settings & BMP3_SEL_FIFO_FWTM_EN )
         {
             /* Fill the FIFO watermark interrupt enable data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_FWTM_EN, fifo_settings->fwtm_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_FWTM_EN, fifo_settings->fwtm_en );
         }
 
-        if (desired_settings & BMP3_SEL_FIFO_FULL_EN)
+        if ( desired_settings & BMP3_SEL_FIFO_FULL_EN )
         {
             /* Fill the FIFO full interrupt enable data */
-            reg_data = BMP3_SET_BITS(reg_data, BMP3_FIFO_FULL_EN, fifo_settings->ffull_en);
+            reg_data = BMP3_SET_BITS( reg_data, BMP3_FIFO_FULL_EN, fifo_settings->ffull_en );
         }
 
         /* Write the power control settings in the register */
-        rslt = bmp3_set_regs(&reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_set_regs( &reg_addr, &reg_data, 1, dev );
     }
 
     return rslt;
@@ -2895,22 +2889,22 @@ static int8_t fill_fifo_int_ctrl(uint16_t desired_settings,
  * @brief This API gets the command ready, data ready for pressure and
  * temperature, power on reset status from the sensor.
  */
-static int8_t get_sensor_status(struct bmp3_status *status, struct bmp3_dev *dev)
+static int8_t get_sensor_status( struct bmp3_status *status, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_addr;
     uint8_t reg_data;
 
     reg_addr = BMP3_REG_SENS_STATUS;
-    rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        status->sensor.cmd_rdy = BMP3_GET_BITS(reg_data, BMP3_STATUS_CMD_RDY);
-        status->sensor.drdy_press = BMP3_GET_BITS(reg_data, BMP3_STATUS_DRDY_PRESS);
-        status->sensor.drdy_temp = BMP3_GET_BITS(reg_data, BMP3_STATUS_DRDY_TEMP);
+        status->sensor.cmd_rdy = BMP3_GET_BITS( reg_data, BMP3_STATUS_CMD_RDY );
+        status->sensor.drdy_press = BMP3_GET_BITS( reg_data, BMP3_STATUS_DRDY_PRESS );
+        status->sensor.drdy_temp = BMP3_GET_BITS( reg_data, BMP3_STATUS_DRDY_TEMP );
         reg_addr = BMP3_REG_EVENT;
-        rslt = bmp3_get_regs(reg_addr, &reg_data, 1, dev);
+        rslt = bmp3_get_regs( reg_addr, &reg_data, 1, dev );
         status->pwr_on_rst = reg_data & 0x01;
     }
 
@@ -2921,18 +2915,18 @@ static int8_t get_sensor_status(struct bmp3_status *status, struct bmp3_dev *dev
  * @brief This API gets the interrupt (fifo watermark, fifo full, data ready)
  * status from the sensor.
  */
-static int8_t get_int_status(struct bmp3_status *status, struct bmp3_dev *dev)
+static int8_t get_int_status( struct bmp3_status *status, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data;
 
-    rslt = bmp3_get_regs(BMP3_REG_INT_STATUS, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( BMP3_REG_INT_STATUS, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        status->intr.fifo_wm = BMP3_GET_BITS_POS_0(reg_data, BMP3_INT_STATUS_FWTM);
-        status->intr.fifo_full = BMP3_GET_BITS(reg_data, BMP3_INT_STATUS_FFULL);
-        status->intr.drdy = BMP3_GET_BITS(reg_data, BMP3_INT_STATUS_DRDY);
+        status->intr.fifo_wm = BMP3_GET_BITS_POS_0( reg_data, BMP3_INT_STATUS_FWTM );
+        status->intr.fifo_full = BMP3_GET_BITS( reg_data, BMP3_INT_STATUS_FFULL );
+        status->intr.drdy = BMP3_GET_BITS( reg_data, BMP3_INT_STATUS_DRDY );
     }
 
     return rslt;
@@ -2942,18 +2936,18 @@ static int8_t get_int_status(struct bmp3_status *status, struct bmp3_dev *dev)
  * @brief This API gets the fatal, command and configuration error
  * from the sensor.
  */
-static int8_t get_err_status(struct bmp3_status *status, struct bmp3_dev *dev)
+static int8_t get_err_status( struct bmp3_status *status, struct bmp3_dev *dev )
 {
     int8_t rslt;
     uint8_t reg_data;
 
-    rslt = bmp3_get_regs(BMP3_REG_ERR, &reg_data, 1, dev);
+    rslt = bmp3_get_regs( BMP3_REG_ERR, &reg_data, 1, dev );
 
-    if (rslt == BMP3_OK)
+    if ( rslt == BMP3_OK )
     {
-        status->err.fatal = BMP3_GET_BITS_POS_0(reg_data, BMP3_ERR_FATAL);
-        status->err.cmd = BMP3_GET_BITS(reg_data, BMP3_ERR_CMD);
-        status->err.conf = BMP3_GET_BITS(reg_data, BMP3_ERR_CONF);
+        status->err.fatal = BMP3_GET_BITS_POS_0( reg_data, BMP3_ERR_FATAL );
+        status->err.cmd = BMP3_GET_BITS( reg_data, BMP3_ERR_CMD );
+        status->err.conf = BMP3_GET_BITS( reg_data, BMP3_ERR_CONF );
     }
 
     return rslt;

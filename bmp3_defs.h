@@ -53,8 +53,10 @@ extern "C" {
 #include <linux/types.h>
 #include <linux/kernel.h>
 #else
+
 #include <stdint.h>
 #include <stddef.h>
+
 #endif
 
 /*************************** Common macros   *****************************/
@@ -103,7 +105,7 @@ extern "C" {
 #ifndef BMP3_64BIT_COMPENSATION /*< Check if 64bit (using BMP3_64BIT_COMPENSATION) is enabled */
 #ifndef BMP3_FLOAT_COMPENSATION /*< If 64 bit integer data type is not enabled then enable
                                             * BMP3_FLOAT_COMPENSATION */
-#define BMP3_FLOAT_COMPENSATION
+//#define BMP3_FLOAT_COMPENSATION
 #endif
 #endif
 
@@ -415,25 +417,25 @@ extern "C" {
 #define BMP3_SET_HIGH_BYTE                      UINT16_C(0xFF00)
 
 /**\name Macro to combine two 8 bit data's to form a 16 bit data */
-#define BMP3_CONCAT_BYTES(msb, lsb)             (((uint16_t)msb << 8) | (uint16_t)lsb)
+#define BMP3_CONCAT_BYTES( msb, lsb )             (((uint16_t)msb << 8) | (uint16_t)lsb)
 
-#define BMP3_SET_BITS(reg_data, bitname, data) \
+#define BMP3_SET_BITS( reg_data, bitname, data ) \
     ((reg_data & ~(bitname##_MSK)) | \
      ((data << bitname##_POS) & bitname##_MSK))
 
 /* Macro variant to handle the bitname position if it is zero */
-#define BMP3_SET_BITS_POS_0(reg_data, bitname, data) \
+#define BMP3_SET_BITS_POS_0( reg_data, bitname, data ) \
     ((reg_data & ~(bitname##_MSK)) | \
      (data & bitname##_MSK))
 
-#define BMP3_GET_BITS(reg_data, bitname)        ((reg_data & (bitname##_MSK)) >> \
+#define BMP3_GET_BITS( reg_data, bitname )        ((reg_data & (bitname##_MSK)) >> \
                                                  (bitname##_POS))
 
 /* Macro variant to handle the bitname position if it is zero */
-#define BMP3_GET_BITS_POS_0(reg_data, bitname)  (reg_data & (bitname##_MSK))
+#define BMP3_GET_BITS_POS_0( reg_data, bitname )  (reg_data & (bitname##_MSK))
 
-#define BMP3_GET_LSB(var)                       (uint8_t)(var & BMP3_SET_LOW_BYTE)
-#define BMP3_GET_MSB(var)                       (uint8_t)((var & BMP3_SET_HIGH_BYTE) >> 8)
+#define BMP3_GET_LSB( var )                       (uint8_t)(var & BMP3_SET_LOW_BYTE)
+#define BMP3_GET_MSB( var )                       (uint8_t)((var & BMP3_SET_HIGH_BYTE) >> 8)
 
 /**\name Macros related to size */
 #define BMP3_LEN_CALIB_DATA                     UINT8_C(21)
@@ -500,7 +502,8 @@ extern "C" {
 /*!
  * @brief Interface selection Enums
  */
-enum bmp3_intf {
+enum bmp3_intf
+{
     /*! SPI interface */
     BMP3_SPI_INTF,
     /*! I2C interface */
@@ -525,7 +528,7 @@ enum bmp3_intf {
  * @retval 0 for Success
  * @retval Non-zero for Failure
  */
-typedef BMP3_INTF_RET_TYPE (*bmp3_read_fptr_t)(uint8_t reg_addr, uint8_t *read_data, uint32_t len, void *intf_ptr);
+typedef BMP3_INTF_RET_TYPE (*bmp3_read_fptr_t)( uint8_t reg_addr, uint8_t *read_data, uint32_t len, void *intf_ptr );
 
 /*!
  * @brief Bus communication function pointer which should be mapped to
@@ -540,8 +543,8 @@ typedef BMP3_INTF_RET_TYPE (*bmp3_read_fptr_t)(uint8_t reg_addr, uint8_t *read_d
  * @retval Non-zero for Failure
  *
  */
-typedef BMP3_INTF_RET_TYPE (*bmp3_write_fptr_t)(uint8_t reg_addr, const uint8_t *read_data, uint32_t len,
-                                                void *intf_ptr);
+typedef BMP3_INTF_RET_TYPE (*bmp3_write_fptr_t)(
+    uint8_t reg_addr, const uint8_t *read_data, uint32_t len, void *intf_ptr );
 
 /*!
  * @brief Delay function pointer which should be mapped to
@@ -552,7 +555,7 @@ typedef BMP3_INTF_RET_TYPE (*bmp3_write_fptr_t)(uint8_t reg_addr, const uint8_t 
  *                                  for interface related call backs
  *
  */
-typedef void (*bmp3_delay_us_fptr_t)(uint32_t period, void *intf_ptr);
+typedef void (*bmp3_delay_us_fptr_t)( uint32_t period, void *intf_ptr );
 
 /********************************************************/
 
