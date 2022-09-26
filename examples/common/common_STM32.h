@@ -10,6 +10,12 @@ extern "C" {
 
 #include "bmp3.h"
 
+typedef struct
+{
+    uint32_t pressure;
+    int32_t temperature;
+} pt_struct;
+
 /*!
  *  @brief Function to select the interface between SPI and I2C.
  *
@@ -20,7 +26,7 @@ extern "C" {
  *  @retval 0 -> Success
  *  @retval < 0 -> Failure Info
  */
-BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf);
+BMP3_INTF_RET_TYPE bmp3_interface_init( struct bmp3_dev *bmp3, uint8_t intf );
 
 /*!
  *  @brief Function for reading the sensor's registers through I2C bus.
@@ -35,7 +41,7 @@ BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf);
  *  @retval != BMP3_INTF_RET_SUCCESS  -> Failure Info
  *
  */
-BMP3_INTF_RET_TYPE bmp3_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr);
+BMP3_INTF_RET_TYPE bmp3_i2c_read( uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr );
 
 /*!
  *  @brief Function for writing the sensor's registers through I2C bus.
@@ -50,7 +56,7 @@ BMP3_INTF_RET_TYPE bmp3_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t l
  *  @retval != BMP3_INTF_RET_SUCCESS  -> Failure Info
  *
  */
-BMP3_INTF_RET_TYPE bmp3_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr);
+BMP3_INTF_RET_TYPE bmp3_i2c_write( uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr );
 
 /*!
  *  @brief Function for reading the sensor's registers through SPI bus.
@@ -65,7 +71,7 @@ BMP3_INTF_RET_TYPE bmp3_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uin
  *  @retval != BMP3_INTF_RET_SUCCESS  -> Failure Info
  *
  */
-BMP3_INTF_RET_TYPE bmp3_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr);
+BMP3_INTF_RET_TYPE bmp3_spi_read( uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr );
 
 /*!
  *  @brief Function for writing the sensor's registers through SPI bus.
@@ -80,7 +86,7 @@ BMP3_INTF_RET_TYPE bmp3_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t l
  *  @retval != BMP3_INTF_RET_SUCCESS  -> Failure Info
  *
  */
-BMP3_INTF_RET_TYPE bmp3_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr);
+BMP3_INTF_RET_TYPE bmp3_spi_write( uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr );
 
 /*!
  * @brief This function provides the delay for required time (Microsecond) as per the input provided in some of the
@@ -92,7 +98,7 @@ BMP3_INTF_RET_TYPE bmp3_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uin
  *  @return void.
  *
  */
-void bmp3_delay_us(uint32_t period, void *intf_ptr);
+void bmp3_delay_us( uint32_t period, void *intf_ptr );
 
 /*!
  *  @brief Prints the execution status of the APIs.
@@ -102,14 +108,14 @@ void bmp3_delay_us(uint32_t period, void *intf_ptr);
  *
  *  @return void.
  */
-void bmp3_check_rslt(const char api_name[], int8_t rslt);
+void bmp3_check_rslt( const char api_name[], int8_t rslt );
 
 /*!
  *  @brief Deinitializes coines platform
  *
  *  @return void.
  */
-void bmp3_coines_deinit(void);
+void bmp3_coines_deinit( void );
 
 #ifdef __cplusplus
 }
