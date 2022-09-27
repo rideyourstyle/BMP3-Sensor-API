@@ -212,7 +212,7 @@ BMP3_INTF_RET_TYPE bmp3_interface_init( struct bmp3_dev *bmp3, uint8_t intf )
 //    else
     if ( intf == BMP3_SPI_INTF )
     {
-        log_error( "SPI Interface\n" );
+        log_error( "SPI Interface" );
 //            dev_addr = COINES_SHUTTLE_PIN_7;
         bmp3->read = bmp3_spi_read;
         bmp3->write = bmp3_spi_write;
