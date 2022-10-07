@@ -13,7 +13,7 @@ extern "C" {
 typedef struct
 {
     uint32_t pressure;
-    int32_t temperature;
+    int32_t temperature; //  0.1 °C
 } pt_struct;
 
 /*!
