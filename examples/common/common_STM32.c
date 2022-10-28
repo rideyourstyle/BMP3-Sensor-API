@@ -13,7 +13,7 @@
 #include "common.h"
 #include "cmsis_os.h"
 
-#import "log.h"  // TODO: make generic
+#include "log.h"  // TODO: make generic
 
 #define PIN_BMP_nCS_Pin          GPIO_PIN_4
 #define PIN_BMP_nCS_GPIO_Port    GPIOC
@@ -92,7 +92,7 @@ BMP3_INTF_RET_TYPE bmp3_spi_read( uint8_t reg_addr, uint8_t *reg_data, uint32_t 
 /*!
  * SPI write function map to COINES platform
  */
-BMP3_INTF_RET_TYPE bmp3_spi_write( uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr )
+BMP3_INTF_RET_TYPE bmp3_spi_write( uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr )
 {
 //    uint8_t device_addr = *( uint8_t * ) intf_ptr;
 //    ( void ) intf_ptr;

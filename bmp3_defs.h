@@ -544,7 +544,7 @@ typedef BMP3_INTF_RET_TYPE (*bmp3_read_fptr_t)( uint8_t reg_addr, uint8_t *read_
  *
  */
 typedef BMP3_INTF_RET_TYPE (*bmp3_write_fptr_t)(
-    uint8_t reg_addr, const uint8_t *read_data, uint32_t len, void *intf_ptr );
+    uint8_t reg_addr, uint8_t *read_data, uint32_t len, void *intf_ptr );
 
 /*!
  * @brief Delay function pointer which should be mapped to
