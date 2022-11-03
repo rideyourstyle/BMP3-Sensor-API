@@ -86,7 +86,7 @@ BMP3_INTF_RET_TYPE bmp3_spi_read( uint8_t reg_addr, uint8_t *reg_data, uint32_t 
  *  @retval != BMP3_INTF_RET_SUCCESS  -> Failure Info
  *
  */
-BMP3_INTF_RET_TYPE bmp3_spi_write( uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr );
+BMP3_INTF_RET_TYPE bmp3_spi_write( uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr );
 
 /*!
  * @brief This function provides the delay for required time (Microsecond) as per the input provided in some of the
